@@ -28,6 +28,8 @@ services:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changeme
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "devdb", "-U", "devuser"]
 
 volumes:
   dev-db-data:
