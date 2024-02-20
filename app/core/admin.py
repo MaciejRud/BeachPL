@@ -1,3 +1,57 @@
-from django.contrib import admin # noqa
+'''
+Admin site customization.
+'''
 
-# Register your models here.
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+from core import models
+
+class UserAdmin(BaseUserAdmin):
+    '''Define the admin page for users.'''
+    list_display = ('id','imie','email','is_staff',)
+    ordering = ['id']
+    fieldsets = [
+        (
+            None,
+            {
+                'fields':['imie','nazwisko','password',]
+            },
+        ),
+        (
+            'Permissions',
+            {
+                'fields':['is_active', 'is_staff', 'is_superuser',]
+            }
+        ),
+        (
+            'Additional informations',
+            {
+                'fields':['user_type','data_urodzenia','last_login',]
+            }
+        ),
+    ]
+    readonly_fields = ['last_login']
+    add_fieldsets = [
+        (
+            None,
+            {
+                'classes':["wide",'cascade',],
+                'fields':[
+                    'email',
+                    'password1',
+                    'password2',
+                    'imie',
+                    'nazwisko',
+                    'data_urodzenia',
+                    'user_type',
+                    'is_active',
+                    'is_staff',
+                    'is_superuser',
+                ]
+            }
+        ),
+    ]
+
+
+admin.site.register(models.User, UserAdmin)
