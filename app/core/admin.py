@@ -7,27 +7,28 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from core import models
 
+
 class UserAdmin(BaseUserAdmin):
     '''Define the admin page for users.'''
-    list_display = ('id','imie','email','is_staff',)
+    list_display = ('id', 'imie', 'email', 'is_staff',)
     ordering = ['id']
     fieldsets = [
         (
             None,
             {
-                'fields':['imie','nazwisko','password',]
+                'fields': ['imie', 'nazwisko', 'password',]
             },
         ),
         (
             'Permissions',
             {
-                'fields':['is_active', 'is_staff', 'is_superuser',]
+                'fields': ['is_active', 'is_staff', 'is_superuser',]
             }
         ),
         (
             'Additional informations',
             {
-                'fields':['user_type','data_urodzenia','last_login',]
+                'fields': ['user_type', 'data_urodzenia', 'last_login',]
             }
         ),
     ]
@@ -36,8 +37,8 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'classes':["wide",'cascade',],
-                'fields':[
+                'classes':["wide", 'cascade',],
+                'fields': [
                     'email',
                     'password1',
                     'password2',

@@ -22,7 +22,7 @@ class ModelTests(TestCase):
 
     def test_normalizing_email_using_to_create_user(self):
         '''Test of normalizing email used to create user.'''
-        sample_mails=[
+        sample_mails = [
             ['test1@EXAMPLE.com', 'test1@example.com'],
             ['Test2@Example.com', 'Test2@example.com'],
             ['TEST3@EXAMPLE.COM', 'TEST3@example.com'],
