@@ -9,13 +9,13 @@ from core import models
 
 class UserAdmin(BaseUserAdmin):
     '''Define the admin page for users.'''
-    list_display = ('id','imie','email','is_staff',)
+    list_display = ('id', 'imie','email', 'is_staff',)
     ordering = ['id']
     fieldsets = [
         (
             None,
             {
-                'fields':['imie','nazwisko','password',]
+                'fields':['imie', 'nazwisko', 'password',]
             },
         ),
         (
@@ -27,7 +27,7 @@ class UserAdmin(BaseUserAdmin):
         (
             'Additional informations',
             {
-                'fields':['user_type','data_urodzenia','last_login',]
+                'fields':['user_type', 'data_urodzenia', 'last_login',]
             }
         ),
     ]
@@ -36,7 +36,7 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'classes':["wide",'cascade',],
+                'classes':["wide", 'cascade',],
                 'fields':[
                     'email',
                     'password1',
