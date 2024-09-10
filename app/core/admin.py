@@ -37,7 +37,7 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'classes':["wide", 'cascade',],
+                'classes': ["wide", 'cascade',],
                 'fields': [
                     'email',
                     'password1',

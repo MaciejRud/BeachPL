@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'localflavor',
     'core',
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_spectacular',
+    'user',
 ]
 
 MIDDLEWARE = [
