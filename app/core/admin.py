@@ -28,7 +28,7 @@ class UserAdmin(BaseUserAdmin):
         (
             'Additional informations',
             {
-                'fields': ['user_type', 'data_urodzenia', 'last_login',]
+                'fields': ['user_type', 'data_urodzenia', 'pesel', 'last_login',]
             }
         ),
     ]
@@ -46,6 +46,7 @@ class UserAdmin(BaseUserAdmin):
                     'nazwisko',
                     'data_urodzenia',
                     'user_type',
+                    'pesel',
                     'is_active',
                     'is_staff',
                     'is_superuser',

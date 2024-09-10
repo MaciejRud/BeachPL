@@ -7,7 +7,18 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+from django.utils.translation import gettext as _
+
+import re
+
 # from django.localflavor.pl.forms import PLPostalCodeField
+
+
+def validate_pesel(value):
+    '''Validates a PESEL number.'''
+    if not re.match(r'^\d{11}$', value) or value is None:
+        msg = _("Pesel must be an 11-digit number.")
+        raise ValidationError(msg)
 
 
 class UserManager(BaseUserManager):
@@ -48,6 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=2,
         choices=UserType,
     )
+    pesel = models.CharField(max_length=11, null=True, validators=[validate_pesel])
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
