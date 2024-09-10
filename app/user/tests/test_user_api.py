@@ -30,6 +30,9 @@ class PublicUserApiTest(TestCase):
             'email': 'test@example.com',
             'password': 'testpass123',
             'imie': 'Test Name',
+            'nazwisko' : "Nazwa",
+            'pesel' : '12345612345',
+            'user_type' : 'PL'
         }
         res = self.client.post(CREATE_USER_URL, payload)
 
@@ -128,9 +131,13 @@ class PrivateUserAPITests(TestCase):
         res = self.client.get(ME_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data,{
-            'imie':self.user.imie,
-            'email':self.user.email,
-        })
+            'email': 'testuser@example.com',
+            'imie': 'Test Name',
+            'nazwisko': '',
+            'pesel': None,
+            'data_urodzenia': None,
+            'user_type': ''
+            })
 
     def test_creating_account_after_login(self):
         '''Test for access to post function on me url point.'''\

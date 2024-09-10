@@ -16,7 +16,7 @@ import re
 
 def validate_pesel(value):
     '''Validates a PESEL number.'''
-    if not re.match(r'^\d{11}$', value) or value is None:
+    if value == " " or not re.match(r'^\d{11}$', value):
         msg = _("Pesel must be an 11-digit number.")
         raise ValidationError(msg)
 
@@ -59,7 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=2,
         choices=UserType,
     )
-    pesel = models.CharField(max_length=11, null=True, validators=[validate_pesel])
+    pesel = models.CharField(max_length=11, null=True, blank= True, validators=[validate_pesel])
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
