@@ -4,6 +4,8 @@ Tests for models.
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
+from core import models
+
 
 class ModelTests(TestCase):
     '''Class for testing models.'''
@@ -47,3 +49,23 @@ class ModelTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_creating_tournament(self):
+        '''Test creating a new tournament.'''
+
+        user = get_user_model().objects.create_user(
+            'test@example.com',
+            'testpass123',
+        )
+        tournament = models.Tournament.objects.create(
+            user=user,
+            name='World Cup',
+            tour_type='MA',
+            city='Warszawa',
+            money_prize=15000,
+            sex="Female",
+            date_of_beginning="2024-09-10",
+            date_of_finishing='2024-09-12'
+        )
+
+        self.assertEqual(str(tournament), tournament.name)

@@ -1,5 +1,8 @@
+'''
+Database models.
+'''
 
-
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager,
@@ -59,18 +62,44 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=2,
         choices=UserType,
     )
+
     pesel = models.CharField(max_length=11, null=True, blank= True, validators=[validate_pesel])
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    # REQUIRED_FIELDS = [
-    #     'email',
-    #     'imie',
-    #     'nazwisko',
-    #     "data_urodzenia",
-    #     'user_type',
-    # ]
-
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+
+class Tournament(models.Model):
+    '''Tournament object.'''
+
+    class TourType(models.TextChoices):
+        SENIOR = "SR", ("Seniorski")
+        JUNIOR = "JR", ("Juniorski")
+        MASTER = "MA", ("Master")
+
+    class Sex(models.TextChoices):
+        MALE = "MALE", ("Męski")
+        FEMALE = "FEMALE", ("Żeński")
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=50)
+    tour_type = models.CharField(
+        max_length=2,
+        choices=TourType,
+    )
+    city = models.CharField(max_length=30)
+    money_prize = models.IntegerField()
+    sex = models.CharField(
+        choices=Sex,
+    )
+    date_of_beginning = models.DateField()
+    date_of_finishing = models.DateField()
+
+    def __str__(self):
+        return self.name
