@@ -9,6 +9,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     PermissionsMixin
 )
+from django.core.exceptions import ValidationError
 
 from django.utils.translation import gettext as _
 

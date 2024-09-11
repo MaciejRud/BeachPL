@@ -9,10 +9,16 @@ from rest_framework.test import APIClient
 
 from core.models import Tournament
 
-from tournament.serializers import TournamentSerializer
+from tournament.serializers import TournamentDetailSerializer
+
+import datetime
 
 
 TOURNAMENTS_URL = reverse('tournament:tournament-list')
+
+def detail_url(tournament_id):
+    '''Return URL for tournament detail.'''
+    return reverse('tournament:tournament-detail', args=[tournament_id])
 
 def create_user(**params):
     '''Create and return new user.'''
@@ -66,6 +72,40 @@ class PrivateTournamentAPITest(TestCase):
         res = self.client.get(TOURNAMENTS_URL)
 
         tournaments = Tournament.objects.all().order_by('-id')
-        serializer = TournamentSerializer(tournaments, many=True)
+        serializer = TournamentDetailSerializer(tournaments, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
+
+    def test_retrieving_details_of_tournament(self):
+        '''Test for return details of tournamnet.'''
+
+        tournament = create_tournament(user=self.user)
+
+        url = detail_url(tournament.id)
+        res = self.client.get(url)
+
+        serializer = TournamentDetailSerializer(tournament)
+
+        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_creating_tournament(self):
+        '''Test for creating tournamtent.'''
+
+        payload = {
+            'name' : 'World Cup',
+            'tour_type' : 'MA',
+            'city' : 'Warszawa',
+            'money_prize' : 15000,
+            'sex' : "FEMALE",
+            'date_of_beginning' : datetime.date(2024, 9, 10),
+            'date_of_finishing' : datetime.date(2024, 9, 12),
+        }
+
+        res = self.client.post(TOURNAMENTS_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        tournament = Tournament.objects.get(id=res.data['id'])
+        for i,v in payload.items():
+            self.assertEqual(getattr(tournament,i),v)
+        self.assertEqual(tournament.user, self.user)
