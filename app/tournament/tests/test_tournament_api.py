@@ -109,3 +109,59 @@ class PrivateTournamentAPITest(TestCase):
         for i,v in payload.items():
             self.assertEqual(getattr(tournament,i),v)
         self.assertEqual(tournament.user, self.user)
+
+    def test_partially_updating_tournament(self):
+        '''Test for partially updating tournament.'''
+
+        tournament = create_tournament(user=self.user)
+
+        payload = {
+            'city' : "Krakow",
+            'sex' : "MALE",
+        }
+        url = detail_url(tournament.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        tournament.refresh_from_db()
+        self.assertEqual(tournament.city, payload['city'])
+        self.assertEqual(tournament.user, self.user)
+
+    def test_updating_tournament_without_permission(self):
+        '''Test for unauthorized try to update permission.'''
+
+        user2 = create_user(email='anotheruser@example.com', password='Test123123')
+        tournament = create_tournament(user=user2, city='Krakow')
+
+        payload = {
+            'city' : "Krakow",
+            'sex' : "MALE",
+        }
+        url = detail_url(tournament.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        tournament.refresh_from_db()
+        self.assertEqual(tournament.city, "Krakow")
+
+    def test_recipe_other_users_recipe_error(self):
+        """Test trying to delete another users recipe gives error."""
+        new_user = create_user(email = 'user2@example.com', password = 'test123')
+        tournament = create_tournament(user = new_user)
+
+        url = detail_url(tournament.id)
+        res = self.client.delete(url)
+
+        print(tournament.id)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Tournament.objects.filter(id=tournament.id).exists())
+
+    def test_destroying_tournament(self):
+        """Test for canceling the tournament."""
+
+        tournament = create_tournament(user=self.user)
+        url=detail_url(tournament.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Tournament.objects.filter(id=tournament.id).exists())
