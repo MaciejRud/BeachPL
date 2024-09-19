@@ -15,8 +15,9 @@ class UserSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'imie', 'nazwisko', 'pesel', 'data_urodzenia', 'user_type']
-        extra_kwargs = {'password' : {'write_only' : True, 'min_length' : 5}}
+        fields = ['email', 'password', 'imie', 'nazwisko',
+                  'pesel', 'data_urodzenia', 'user_type']
+        extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
         '''Creating a new user.'''
@@ -34,15 +35,12 @@ class UserSerializers(serializers.ModelSerializer):
         return user
 
 
-
-
-
 class AuthTokenSerializer(serializers.Serializer):
     '''Serializer for the user auth token.'''
     email = serializers.EmailField()
     password = serializers.CharField(
-        style = {'input_type' : 'password'},
-        trim_whitespace = False,
+        style={'input_type': 'password'},
+        trim_whitespace=False,
     )
 
     def validate (self, data):
@@ -56,8 +54,7 @@ class AuthTokenSerializer(serializers.Serializer):
 
         if user is None:
             msg = _('Unable to authenticate with provided credentials.')
-            raise serializers.ValidationError(msg, code= 'authentication')
+            raise serializers.ValidationError(msg, code='authentication')
 
         data['user'] = user
         return data
-

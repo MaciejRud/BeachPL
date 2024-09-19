@@ -28,7 +28,8 @@ class UserAdmin(BaseUserAdmin):
         (
             'Additional informations',
             {
-                'fields': ['user_type', 'data_urodzenia', 'pesel', 'last_login',]
+                'fields': ['user_type', 'data_urodzenia',
+                           'pesel', 'last_login',]
             }
         ),
     ]

@@ -1,2 +1,3 @@
 # BeachPL-api
-Backend for polish beachvolleyball site 
+
+Backend for polish beachvolleyball site

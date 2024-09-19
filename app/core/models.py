@@ -64,7 +64,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=UserType,
     )
 
-    pesel = models.CharField(max_length=11, null=True, blank= True, validators=[validate_pesel])
+    pesel = models.CharField(max_length=11, null=True, blank=True,
+                             validators=[validate_pesel])
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

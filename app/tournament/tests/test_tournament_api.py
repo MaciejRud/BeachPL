@@ -16,26 +16,28 @@ import datetime
 
 TOURNAMENTS_URL = reverse('tournament:tournament-list')
 
+
 def detail_url(tournament_id):
     '''Return URL for tournament detail.'''
     return reverse('tournament:tournament-detail', args=[tournament_id])
+
 
 def create_user(**params):
     '''Create and return new user.'''
     return get_user_model().objects.create_user(**params)
 
+
 def create_tournament(user, **params):
     '''Create and return a sample tournament'''
     defaults = {
-        'name' : 'World Cup',
-        'tour_type' : 'MA',
-        'city' : 'Warszawa',
-        'money_prize' : 15000,
-        'sex' : "Female",
-        'date_of_beginning' : "2024-09-10",
-        'date_of_finishing' : '2024-09-12',
+        'name': 'World Cup',
+        'tour_type': 'MA',
+        'city': 'Warszawa',
+        'money_prize': 15000,
+        'sex': "Female",
+        'date_of_beginning': "2024-09-10",
+        'date_of_finishing': '2024-09-12',
     }
-
     defaults.update(params)
 
     tournament = Tournament.objects.create(user=user, **defaults)
@@ -55,12 +57,14 @@ class PublicTournamentAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
+
 class PrivateTournamentAPITest(TestCase):
     '''Tests for authorized access to tournaments.'''
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(email='TestUser@example.com', password='123Test123')
+        self.user = create_user(email='TestUser@example.com',
+                                password='123Test123')
         self.client.force_authenticate(self.user)
 
     def test_authorized_access_to_list_of_tournaments(self):
@@ -93,21 +97,21 @@ class PrivateTournamentAPITest(TestCase):
         '''Test for creating tournamtent.'''
 
         payload = {
-            'name' : 'World Cup',
-            'tour_type' : 'MA',
-            'city' : 'Warszawa',
-            'money_prize' : 15000,
-            'sex' : "FEMALE",
-            'date_of_beginning' : datetime.date(2024, 9, 10),
-            'date_of_finishing' : datetime.date(2024, 9, 12),
+            'name': 'World Cup',
+            'tour_type': 'MA',
+            'city': 'Warszawa',
+            'money_prize': 15000,
+            'sex': "FEMALE",
+            'date_of_beginning': datetime.date(2024, 9, 10),
+            'date_of_finishing': datetime.date(2024, 9, 12),
         }
 
         res = self.client.post(TOURNAMENTS_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tournament = Tournament.objects.get(id=res.data['id'])
-        for i,v in payload.items():
-            self.assertEqual(getattr(tournament,i),v)
+        for i, v in payload.items():
+            self.assertEqual(getattr(tournament, i), v)
         self.assertEqual(tournament.user, self.user)
 
     def test_partially_updating_tournament(self):
@@ -116,8 +120,8 @@ class PrivateTournamentAPITest(TestCase):
         tournament = create_tournament(user=self.user)
 
         payload = {
-            'city' : "Krakow",
-            'sex' : "MALE",
+            'city': "Krakow",
+            'sex': "MALE",
         }
         url = detail_url(tournament.id)
         res = self.client.patch(url, payload)
@@ -130,12 +134,13 @@ class PrivateTournamentAPITest(TestCase):
     def test_updating_tournament_without_permission(self):
         '''Test for unauthorized try to update permission.'''
 
-        user2 = create_user(email='anotheruser@example.com', password='Test123123')
+        user2 = create_user(email='anotheruser@example.com',
+                            password='Test123123')
         tournament = create_tournament(user=user2, city='Krakow')
 
         payload = {
-            'city' : "Krakow",
-            'sex' : "MALE",
+            'city': "Krakow",
+            'sex': "MALE",
         }
         url = detail_url(tournament.id)
         res = self.client.patch(url, payload)
@@ -146,13 +151,13 @@ class PrivateTournamentAPITest(TestCase):
 
     def test_recipe_other_users_recipe_error(self):
         """Test trying to delete another users recipe gives error."""
-        new_user = create_user(email = 'user2@example.com', password = 'test123')
-        tournament = create_tournament(user = new_user)
+        new_user = create_user(email='user2@example.com',
+                               password='test123')
+        tournament = create_tournament(user=new_user)
 
         url = detail_url(tournament.id)
         res = self.client.delete(url)
 
-        print(tournament.id)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Tournament.objects.filter(id=tournament.id).exists())
 
@@ -160,7 +165,7 @@ class PrivateTournamentAPITest(TestCase):
         """Test for canceling the tournament."""
 
         tournament = create_tournament(user=self.user)
-        url=detail_url(tournament.id)
+        url = detail_url(tournament.id)
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
