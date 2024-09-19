@@ -20,7 +20,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         '''Retrieve tournaments for authoritated users.'''
-        return self.queryset.filter(user= self.request.user).order_by('-id')
+        return self.queryset.filter(user=self.request.user).order_by('-id')
 
     def get_serializer_class(self):
         '''Serializer for list of tournaments.'''

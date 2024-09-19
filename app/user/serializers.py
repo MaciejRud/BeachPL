@@ -43,7 +43,7 @@ class AuthTokenSerializer(serializers.Serializer):
         trim_whitespace=False,
     )
 
-    def validate (self, data):
+    def validate(self, data):
         '''Validate and authenticate the user.'''
         email = data.get('email')
         password = data.get('password')
