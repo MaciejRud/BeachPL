@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!DOCTYPE html>
+{% block content%}
+        <main class="masthead">
+            <div class="container px-5">
+                <div class="row gx-5 align-items-center">
+                    <div class="col-lg-6">
+                        <!-- Mashead text-->
+                        <div class="mb-5 mb-lg-0 text-center text-lg-start">
+                            <h1 class="display-1 lh-1 mb-3">POLSKA SIATKÓWKA</h1>
+                            <p class="lead fw-normal text-muted mb-5">Centrum zarządzania turniejami Polskiego Związku Siatkówki Plażowej</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-8 col-sm-12">
+                        <div>
+                            <img src="{% static 'assets/img/plaza-img.jpg' %}" alt="Plaza image" style="max-width: 100%; height: auto;" class="beach-image" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+{% endblock %}

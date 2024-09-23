@@ -9,12 +9,16 @@ from core.models import Tournament
 
 class TournamentSerializer(serializers.ModelSerializer):
     '''Serializer for Tournaments.'''
+    sex_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Tournament
         fields = ['id', 'name', 'tour_type', 'city', 'money_prize', 'sex',
-                  'date_of_beginning', 'date_of_finishing']
+                  'sex_display', 'date_of_beginning', 'date_of_finishing']
         read_only_fields = ['id']
+
+    def get_sex_display(self, obj):
+        return obj.get_sex_display()
 
 
 class TournamentDetailSerializer(TournamentSerializer):

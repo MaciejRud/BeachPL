@@ -3,11 +3,18 @@ Views for the tournament APIs.
 """
 
 from rest_framework import viewsets
+from rest_framework.decorators import api_view
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+)
 
 from core.models import Tournament
 from tournament import serializers
+
+from django.shortcuts import render
+from django.views.generic import TemplateView
 
 
 class TournamentViewSet(viewsets.ModelViewSet):
@@ -31,3 +38,21 @@ class TournamentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         '''Create a new tournament.'''
         serializer.save(user=self.request.user)
+
+
+class TournamentListView(TemplateView):
+    template_name = 'tournament/tournament_list.html'
+
+
+class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
+    '''View for listing tournaments publicly.'''
+
+    serializer_class = serializers.TournamentSerializer
+    queryset = Tournament.objects.all()
+    permission_classes = [AllowAny]  # Allow access to everyone
+
+    def get_queryset(self):
+        '''Retrieve tournaments publicly.'''
+        return self.queryset.order_by('date_of_beginning')
+
+

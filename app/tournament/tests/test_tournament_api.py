@@ -15,6 +15,7 @@ import datetime
 
 
 TOURNAMENTS_URL = reverse('tournament:tournament-list')
+PUBLIC_TOURNAMENTS_URL = reverse('tournament:public-tournament-list')
 
 
 def detail_url(tournament_id):
@@ -56,6 +57,42 @@ class PublicTournamentAPITests(TestCase):
         res = self.client.get(TOURNAMENTS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retriving_public_list_of_tournaments(self):
+        '''Test for available for any user getiing list of tournaments.'''
+
+        user1 = create_user(
+            email = "hubert@example.com",
+            password = "Test123",
+        )
+
+        user2 = create_user(
+            email = "aleks@example.com",
+            password = "Test123",
+        )
+
+        payload = {
+            'name': 'Mistrzostwa Polski',
+            'tour_type': 'MA',
+            'city': 'Iława',
+            'money_prize': 5000,
+            'sex': "Female",
+            'date_of_beginning': "2024-11-28",
+            'date_of_finishing': '2024-11-29',
+        }
+
+        create_tournament(user=user1)
+        create_tournament(user=user2, **payload)
+
+        res = self.client.get(PUBLIC_TOURNAMENTS_URL)
+
+        tournaments = Tournament.objects.all().order_by('date_of_beginning')
+        serializer = TournamentDetailSerializer(tournaments, many=True)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
+
+
+
 
 
 class PrivateTournamentAPITest(TestCase):
