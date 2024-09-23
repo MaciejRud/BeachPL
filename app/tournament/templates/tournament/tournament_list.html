@@ -25,7 +25,7 @@
                 } else {
                     data.forEach(tournament => {
                         const item = document.createElement('a');
-                        item.href = `{% url 'tournament:public-tournament-detail' 0 %}`.replace('0', tournament.id);
+                        item.href = `{% url 'public-tournament-detail' 0 %}`.replace('0', tournament.id);
                         item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
                         item.innerHTML = `
                             <div class="ms-2 me-auto">

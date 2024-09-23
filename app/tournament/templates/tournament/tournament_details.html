@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Szczegóły Turnieju{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+    <h1 class="mb-4" id="tournament-name">Nazwa Turnieju</h1>
+
+    <!-- Tournament Details -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="card-text">
+                <strong>Opis:</strong> <span id="tournament-description">Opis turnieju</span><br>
+                <strong>Typ:</strong> <span id="tournament-type">Typ turnieju</span><br>
+                <strong>Miasto:</strong> <a id="tournament-city" href="https://www.google.com/maps" target="_blank">Miasto</a><br>
+                <strong>Nagroda:</strong> <span id="tournament-prize">Nagroda</span><br>
+                <strong>Płeć:</strong> <span id="tournament-sex">Płeć</span><br>
+                <strong>Data rozpoczęcia:</strong> <span id="start-date">Data rozpoczęcia</span><br>
+                <strong>Data zakończenia:</strong> <span id="end-date">Data zakończenia</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Players List Placeholder -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Lista Zawodników</h5>
+            <ul class="list-group">
+                <li class="list-group-item">Zawodnik 1</li>
+                <li class="list-group-item">Zawodnik 2</li>
+                <li class="list-group-item">Zawodnik 3</li>
+                <!-- Przykładowi zawodnicy, do edycji później -->
+            </ul>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/tournament_detail.css' %}">
+{% endblock %}
+
+{% block script %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log(window.location.pathname.split('/'))
+        const tournamentId = window.location.pathname.split('/')[window.location.pathname.split('/').length - 2];
+        fetch(`/api/public-tournaments/${tournamentId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Turniej nie został znaleziony');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('tournament-name').textContent = data.name;
+                document.getElementById('tournament-type').textContent = data.type_display
+                document.getElementById('tournament-city').textContent = data.city;
+                document.getElementById('tournament-city').href = `https://www.google.com/maps/search/?api=1&query=${data.city}`;
+                document.getElementById('tournament-prize').textContent = data.money_prize + " zł"
+                document.getElementById('tournament-sex').textContent = data.sex_display
+                document.getElementById('start-date').textContent = new Date(data.date_of_beginning).toLocaleDateString();
+                document.getElementById('end-date').textContent = new Date(data.date_of_finishing).toLocaleDateString();
+            })
+            .catch(error => {
+                document.getElementById('react-root').innerHTML = '<p>Turniej nie został znaleziony</p>';
+            });
+    });
+</script>
+
+{% endblock %}

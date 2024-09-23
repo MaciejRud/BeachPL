@@ -43,6 +43,9 @@ class TournamentViewSet(viewsets.ModelViewSet):
 class TournamentListView(TemplateView):
     template_name = 'tournament/tournament_list.html'
 
+class DetailedTournamentView(TemplateView):
+    template_name='tournament/tournament_details.html'
+
 
 class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
     '''View for listing tournaments publicly.'''
