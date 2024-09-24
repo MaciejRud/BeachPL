@@ -5,6 +5,7 @@ Views for the user API.
 from rest_framework import generics, authentication, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from django.views.generic import TemplateView
 
 from user.serializers import (
     UserSerializers,
@@ -32,3 +33,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         '''Retrieve and return the authenticated user.'''
         return self.request.user
+
+
+class CreateUserTemplate(TemplateView):
+    template_name='user/register.html'

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rejestracja{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+    <h1 class="mb-4">Rejestracja</h1>
+
+    <form id="registration-form">
+        <div class="mb-3">
+            <label for="email" class="form-label">Adres email</label>
+            <input type="email" id="email" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Hasło</label>
+            <input type="password" id="password" name="password" class="form-control" required minlength="5">
+        </div>
+        <div class="mb-3">
+            <label for="imie" class="form-label">Imię</label>
+            <input type="text" id="imie" name="imie" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="nazwisko" class="form-label">Nazwisko</label>
+            <input type="text" id="nazwisko" name="nazwisko" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="pesel" class="form-label">PESEL</label>
+            <input type="text" id="pesel" name="pesel" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="data_urodzenia" class="form-label">Data urodzenia</label>
+            <input type="date" id="data_urodzenia" name="data_urodzenia" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="user_type" class="form-label">Typ użytkownika</label>
+            <select id="user_type" name="user_type" class="form-select" required>
+                <option value="PL">Zawodnik</option>
+                <option value="RE">Sędzia</option>
+                <option value="VO">Wolontariusz</option>
+                <option value="OR">Organizator</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Zarejestruj się</button>
+    </form>
+      <!-- Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true"
+    data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="successModalLabel">Rejestracja zakończona sukcesem!</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            Twoje konto zostało założone.
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="okButton">OK</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div id="message" class="mt-3"></div>
+</main>
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('value');
+    var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registration-form');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            fetch('{% url "user:create" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                    successModal.show();
+                } else {
+                    return response.json().then(data => {
+                        messageDiv.textContent = `Błąd: ${data.non_field_errors || 'Nieznany błąd'}`;
+                        messageDiv.className = 'alert alert-danger';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Błąd:', error);
+                messageDiv.textContent = 'Wystąpił błąd podczas rejestracji.';
+                messageDiv.className = 'alert alert-danger';
+            });
+        });
+
+        okButton.addEventListener('click', function() {
+            successModal.hide();
+            window.location.href = '/';  // Przekierowanie na stronę główną po kliknięciu OK
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
