@@ -11168,3 +11168,20 @@ footer a:hover, footer a:active, footer a:focus {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Delikatny cień */
   transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animacja */
 }
+
+#login-form-wrapper {
+  width: 300px;
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 20px;
+  position: absolute;
+  right: 20px;
+  top: 60px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* Ukrycie formularza po załadowaniu strony */
+.d-none {
+  display: none;
+}
