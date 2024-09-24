@@ -36,4 +36,4 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
 
 class CreateUserTemplate(TemplateView):
-    template_name='user/register.html'
+    template_name = 'user/register.html'

@@ -14,8 +14,9 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tournament
-        fields = ['id', 'name', 'tour_type', 'type_display', 'city', 'money_prize', 'sex',
-                  'sex_display', 'date_of_beginning', 'date_of_finishing']
+        fields = ['id', 'name', 'tour_type', 'type_display', 'city',
+                  'money_prize', 'sex', 'sex_display',
+                  'date_of_beginning', 'date_of_finishing']
         read_only_fields = ['id']
 
     def get_sex_display(self, obj):

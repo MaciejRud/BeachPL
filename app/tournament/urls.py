@@ -12,7 +12,8 @@ from tournament import views
 
 router = DefaultRouter()
 router.register('tournament', views.TournamentViewSet, basename='tournament')
-router.register('public-tournaments', views.PublicViewOfTournamentsViewSet, basename='public-tournament')
+router.register('public-tournaments', views.PublicViewOfTournamentsViewSet,
+                basename='public-tournament')
 
 app_name = 'tournament'
 

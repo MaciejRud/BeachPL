@@ -3,7 +3,6 @@ Views for the tournament APIs.
 """
 
 from rest_framework import viewsets
-from rest_framework.decorators import api_view
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -13,7 +12,6 @@ from rest_framework.permissions import (
 from core.models import Tournament
 from tournament import serializers
 
-from django.shortcuts import render
 from django.views.generic import TemplateView
 
 
@@ -43,8 +41,9 @@ class TournamentViewSet(viewsets.ModelViewSet):
 class TournamentListView(TemplateView):
     template_name = 'tournament/tournament_list.html'
 
+
 class DetailedTournamentView(TemplateView):
-    template_name='tournament/tournament_details.html'
+    template_name = 'tournament/tournament_details.html'
 
 
 class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -57,5 +56,3 @@ class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         '''Retrieve tournaments publicly.'''
         return self.queryset.order_by('date_of_beginning')
-
-

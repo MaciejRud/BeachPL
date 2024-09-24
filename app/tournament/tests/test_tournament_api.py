@@ -62,13 +62,13 @@ class PublicTournamentAPITests(TestCase):
         '''Test for available for any user getiing list of tournaments.'''
 
         user1 = create_user(
-            email = "hubert@example.com",
-            password = "Test123",
+            email="hubert@example.com",
+            password="Test123",
         )
 
         user2 = create_user(
-            email = "aleks@example.com",
-            password = "Test123",
+            email="aleks@example.com",
+            password="Test123",
         )
 
         payload = {
@@ -90,9 +90,6 @@ class PublicTournamentAPITests(TestCase):
         serializer = TournamentDetailSerializer(tournaments, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
-
-
-
 
 
 class PrivateTournamentAPITest(TestCase):
