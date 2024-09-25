@@ -138,7 +138,6 @@ class PrivateUserAPITests(TestCase):
             'imie': 'Test Name',
             'nazwisko': '',
             'pesel': None,
-            'data_urodzenia': None,
             'user_type': ''
             })
 
