@@ -17,6 +17,11 @@ class UserAdmin(BaseUserAdmin):
 
     def get_fieldsets(self, request, obj=None):
         '''Customize fieldsets dynamically based on user_type.'''
+        # Sprawdzamy, czy edytujemy istniejącego użytkownika (obj != None)
+        if not obj:
+            # Jeśli nie ma obiektu, tzn. że dodajemy nowego użytkownika, więc użyj add_fieldsets
+            return self.add_fieldsets
+        # Dla edycji użytkownika (obj != None) używamy fieldsets
         fieldsets = [
             (
                 None,
@@ -38,20 +43,16 @@ class UserAdmin(BaseUserAdmin):
                 }
             ),
         ]
-        if obj and obj.user_type == 'player':
-                # Additional fields for players
-                fieldsets.append(
-                    (
-                        None,
-                        {
-                            'fields': ['data_urodzenia']
-                        },
-                        'Punkty',
-                        {
-                            'fields': ['points']
-                        },
-                    )
+        if obj.user_type == 'PL':
+            # Dodanie dodatkowych pól dla graczy
+            fieldsets.append(
+                (
+                    'Additional information',
+                    {
+                        'fields': ['data_urodzenia', 'points']
+                    },
                 )
+            )
 
         return fieldsets
 
