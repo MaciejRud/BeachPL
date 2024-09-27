@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Tournament
+from core.models import Tournament, Team
 
 from tournament.serializers import TournamentDetailSerializer
 
@@ -98,7 +98,8 @@ class PrivateTournamentAPITest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = create_user(email='TestUser@example.com',
-                                password='123Test123')
+                                password='123Test123',
+                                user_type='OR',)
         self.client.force_authenticate(self.user)
 
     def test_authorized_access_to_list_of_tournaments(self):
@@ -127,8 +128,8 @@ class PrivateTournamentAPITest(TestCase):
         self.assertEqual(res.data, serializer.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    def test_creating_tournament(self):
-        '''Test for creating tournamtent.'''
+    def test_creating_tournament_by_organizer(self):
+        '''Test for creating tournament by organizer.'''
 
         payload = {
             'name': 'World Cup',
@@ -140,13 +141,48 @@ class PrivateTournamentAPITest(TestCase):
             'date_of_finishing': datetime.date(2024, 9, 12),
         }
 
-        res = self.client.post(TOURNAMENTS_URL, payload)
+        # Create an organizer user
+        organizer = create_user(
+            email='organizer@example.com',
+            password='TestPass123',
+            imie="Organizer",
+            user_type='OR'
+        )
+        self.client.force_authenticate(organizer)
 
+        res = self.client.post(TOURNAMENTS_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tournament = Tournament.objects.get(id=res.data['id'])
         for i, v in payload.items():
             self.assertEqual(getattr(tournament, i), v)
-        self.assertEqual(tournament.user, self.user)
+        self.assertEqual(tournament.user, organizer)
+
+
+    def test_creating_tournament_by_non_organizer(self):
+        '''Test that non-organizers cannot create tournaments.'''
+
+        payload = {
+            'name': 'World Cup',
+            'tour_type': 'MA',
+            'city': 'Warszawa',
+            'money_prize': 15000,
+            'sex': "FEMALE",
+            'date_of_beginning': datetime.date(2024, 9, 10),
+            'date_of_finishing': datetime.date(2024, 9, 12),
+        }
+
+        # Create a non-organizer user
+        non_organizer = create_user(
+            email='nonorganizer@example.com',
+            password='TestPass123',
+            imie="Non-Organizer",
+            user_type='PL'
+        )
+        self.client.force_authenticate(non_organizer)
+
+        res = self.client.post(TOURNAMENTS_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Tournament.objects.count(), 0)
 
     def test_partially_updating_tournament(self):
         '''Test for partially updating tournament.'''
@@ -183,8 +219,8 @@ class PrivateTournamentAPITest(TestCase):
         tournament.refresh_from_db()
         self.assertEqual(tournament.city, "Krakow")
 
-    def test_recipe_other_users_recipe_error(self):
-        """Test trying to delete another users recipe gives error."""
+    def test_delete_other_users_tournament_error(self):
+        """Test trying to delete another users tournament gives error."""
         new_user = create_user(email='user2@example.com',
                                password='test123')
         tournament = create_tournament(user=new_user)
@@ -204,3 +240,132 @@ class PrivateTournamentAPITest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Tournament.objects.filter(id=tournament.id).exists())
+
+class TournamentTeamTestCase(TestCase):
+    '''Tests for managing teams in tournament.'''
+    def setUp(self):
+        self.client = APIClient()
+        self.organizer = create_user(email='organizer@example.com', password='TestPass123', user_type='OR')
+        self.player1 = create_user(email='player1@example.com', password='TestPass123', user_type='PL')
+        self.player2 = create_user(email='player2@example.com', password='TestPass123', user_type='PL')
+        self.client.force_authenticate(self.organizer)
+        self.tournament = create_tournament(user=self.organizer)
+        self.url = detail_url(self.tournament.id)
+
+    def test_create_team(self):
+        '''Test for create a team by player.'''
+        payload = {
+            'players': [self.player1.id, self.player2.id]
+        }
+
+        res = self.client.post(f'{self.url}create_team/', payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(self.tournament.teams.filter(players__in=[self.player1, self.player2]).exists())
+
+
+class RemoveTeamFromTournamentTests(TestCase):
+    '''Tests for removing a team from a tournament.'''
+
+    def setUp(self):
+        '''Setup for the test cases.'''
+        self.client = APIClient()
+
+        self.organizer = create_user(
+            email='organizer@example.com',
+            password='testpass123',
+            user_type='OR',
+        )
+
+        self.tournament = create_tournament(self.organizer)
+        self.url = detail_url(self.tournament.id)
+
+        # Tworzymy dwóch graczy
+        self.player1 = create_user(
+            email='player1@example.com',
+            password='testpass123',
+            user_type='PL',
+        )
+        self.player2 = create_user(
+            email='player2@example.com',
+            password='testpass123',
+            user_type='PL',
+        )
+
+        # Tworzymy drużynę
+        self.team = Team.objects.create()
+        self.team.players.set([self.player1, self.player2])
+
+        # Przypisujemy drużynę do turnieju
+        self.tournament.teams.add(self.team)
+
+        # Ustawiamy URL
+        self.url = reverse('tournament:tournament-remove-team', kwargs={'pk': self.tournament.id})
+
+    def test_remove_team_success(self):
+        '''Test that a user can remove a team they are part of.'''
+        self.client.force_authenticate(user=self.player1)
+
+        payload = {'team_id': self.team.id}
+        res = self.client.delete(self.url, data=payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertNotIn(self.team, self.tournament.teams.all())
+
+    def test_remove_team_not_member(self):
+        '''Test that a user who is not part of a team cannot remove it.'''
+        other_user = create_user(
+            email='otheruser@example.com',
+            password='testpass123',
+            user_type='PL',
+        )
+        self.client.force_authenticate(user=other_user)
+
+        payload = {'team_id': self.team.id}
+        res = self.client.delete(self.url, data=payload)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_remove_team_does_not_exist(self):
+        '''Test that trying to remove a non-existent team returns 404.'''
+        self.client.force_authenticate(user=self.player1)
+
+        payload = {'team_id': 999}  # Nieistniejąca drużyna
+        res = self.client.delete(self.url, data=payload)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_remove_team_deletes_if_no_other_tournaments(self):
+        '''Test that a team is deleted if it is not part of any other tournaments.'''
+        self.client.force_authenticate(user=self.player1)
+
+        payload = {'team_id': self.team.id}
+        res = self.client.delete(self.url, data=payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        with self.assertRaises(Team.DoesNotExist):
+            Team.objects.get(id=self.team.id)
+
+    def test_remove_team_not_deletes_if_part_of_other_tournaments(self):
+        '''Test that a team is not deleted if it is part of another tournament.'''
+        other_tournament = create_tournament(
+            user=self.organizer,
+            name='Second Tournament',
+            city='Krakow',
+            money_prize=1500,
+            sex='MALE',
+            tour_type='SR',
+            ranking_type='OneStar',
+            date_of_beginning='2024-10-01',
+            date_of_finishing='2024-10-02',
+        )
+        other_tournament.teams.add(self.team)
+
+        self.client.force_authenticate(user=self.player1)
+
+        payload = {'team_id': self.team.id}
+        res = self.client.delete(self.url, data=payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(self.team, other_tournament.teams.all())  # Drużyna pozostaje w innym turnieju
+

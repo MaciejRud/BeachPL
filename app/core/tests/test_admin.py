@@ -70,7 +70,6 @@ class AdminSiteTest(TestCase):
         '''Test of page with editing of user.'''
         url = reverse('admin:core_tournament_change', args=[self.tournament.id])
         res = self.client.get(url)
-        print(Tournament.objects.all())
 
         self.assertEqual(res.status_code, 200)
 

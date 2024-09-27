@@ -8,10 +8,18 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from core.models import User
+
+from user.serializers import (
+    UserListSerializer,
+    UserSerializers,
+)
+
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
 ME_URL = reverse('user:me')
+LIST_OF_USERS_URL = reverse('user:player-list')
 
 
 def create_user(**params):
@@ -115,6 +123,12 @@ class PublicUserApiTest(TestCase):
         res = self.client.get(ME_URL)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_access_denied_for_list_of_players_without_authentication(self):
+        '''Test for unathorized access to list of players.'''
+
+        res = self.client.get(LIST_OF_USERS_URL)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class PrivateUserAPITests(TestCase):
     """Test API User that require authentication."""
@@ -162,3 +176,71 @@ class PrivateUserAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.imie, payload['imie'])
         self.assertTrue(self.user.check_password(payload['password']))
+
+    def test_retrieving_list_of_players(self):
+        '''Test for retrieving list of players.'''
+
+        create_user(
+            imie='Hubert',
+            nazwisko = 'Testowy1',
+            email='testuser1@example.com',
+            password='TestPass',
+            user_type = 'PL',
+        )
+
+        create_user(
+            imie='Andrzej',
+            nazwisko = 'Testowy2',
+            email='testuser2@example.com',
+            password='TestPass',
+            user_type = 'PL',
+        )
+
+        create_user(
+            imie='Wojtek',
+            nazwisko = 'Testowy3',
+            email='testuser3@example.com',
+            password='TestPass',
+            user_type = 'PL',
+        )
+
+        res = self.client.get(LIST_OF_USERS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        list_of_tournaments = User.objects.filter(user_type='PL').order_by('nazwisko')
+        serializer = UserListSerializer(list_of_tournaments, many=True)
+        self.assertEqual(res.data, serializer.data)
+
+    def test_retrieving_list_of_players(self):
+        '''Test for retrieving list of only players.'''
+
+        create_user(
+            imie='Hubert',
+            nazwisko = 'Testowy1',
+            email='testuser1@example.com',
+            password='TestPass',
+            user_type = 'PL',
+        )
+
+        create_user(
+            imie='Andrzejt',
+            nazwisko = 'Testowy2',
+            email='testuser2@example.com',
+            password='TestPass',
+            user_type = 'PL',
+        )
+
+        user_organizer = create_user(
+            imie='Wojtek',
+            nazwisko = 'Testowy3',
+            email='testuser3@example.com',
+            password='TestPass',
+            user_type = 'OR',
+        )
+
+        res = self.client.get(LIST_OF_USERS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        for user in res.data:
+            self.assertNotIn(user_organizer.imie, user['imie'])

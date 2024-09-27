@@ -34,6 +34,13 @@ class UserSerializers(serializers.ModelSerializer):
 
         return user
 
+class UserListSerializer(serializers.ModelSerializer):
+    """Serializers for the listing users."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'imie', 'nazwisko', 'user_type']
+
 
 class AuthTokenSerializer(serializers.Serializer):
     '''Serializer for the user auth token.'''
