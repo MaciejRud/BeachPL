@@ -59,9 +59,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=UserType,
     )
 
+    class Gender(models.TextChoices):
+        MALE = "MALE", ("Męski")
+        FEMALE = "FEMALE", ("Żeński")
+
+    gender = models.CharField(
+        max_length=6,
+        choices=Gender.choices,
+    )
+
     pesel = models.CharField(max_length=11, null=True, blank=True,
                              validators=[validate_pesel])
-    points = models.IntegerField(default=0, null=True, blank=True)
+    tournament_points = models.JSONField(default=dict, blank=True)  # Przechowuj punkty za turnieje
+    total_points = models.IntegerField(default=0, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -162,6 +172,12 @@ class Tournament(models.Model):
     def __str__(self):
         return self.name
 
+    def finish_tournament(self):
+        # Zakładając, że wyniki są już wypełnione, iteruj przez nie
+        results = TournamentResult.objects.filter(tournament=self).order_by('position')
+        for result in results:
+            result.assign_points()
+
 class TournamentResult(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -170,3 +186,30 @@ class TournamentResult(models.Model):
     class Meta:
         unique_together = ('tournament', 'team')
         ordering = ['position']
+
+    def assign_points(self):
+        points_distribution = {
+            "NoneRank": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 9: 0, 13: 0, 17: 0,},  # Brak punktów dla bezrankingowych
+            "OneStar": {1: 200, 2: 160, 3: 120, 4: 100, 5: 60, 9: 40, 13: 20, 17: 10,},   # Przykładowe punkty za 1 gwiazdkę
+            "TwoStars": {1: 300, 2: 260, 3: 220, 4: 180, 5: 100, 9: 60, 13: 30, 17: 15,}, # Przykładowe punkty za 2 gwiazdki
+            "ThreeStars": {1: 400, 2: 360, 3: 320, 4: 280, 5: 200, 9: 160, 13: 100, 17: 50,}, # Przykładowe punkty za 3 gwiazdki
+        }
+
+        # Pobierz punkty dla typu rankingu
+        points = points_distribution[self.tournament.ranking_type]
+
+        # Pobierz pozycję drużyny
+        position = self.position
+
+        if position in points:
+            team_players = self.team.players.all()
+            num_players = team_players.count()
+
+            # Oblicz punkty do przyznania dla każdego zawodnika
+            points_per_player = points[position] / num_players if num_players > 0 else 0
+
+            for player in team_players:
+                # Zaktualizuj punkty zawodnika
+                player.total_points += points_per_player
+                player.tournament_points[self.tournament.id] = points_per_player
+                player.save()

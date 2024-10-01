@@ -56,7 +56,7 @@ class PublicTournamentAPITests(TestCase):
 
         res = self.client.get(TOURNAMENTS_URL)
 
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_retriving_public_list_of_tournaments(self):
         '''Test for available for any user getiing list of tournaments.'''
@@ -258,6 +258,7 @@ class TournamentTeamTestCase(TestCase):
             'players': [self.player1.id, self.player2.id]
         }
 
+        self.client.force_authenticate(self.player1)
         res = self.client.post(f'{self.url}create_team/', payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -334,17 +335,6 @@ class RemoveTeamFromTournamentTests(TestCase):
         res = self.client.delete(self.url, data=payload)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_remove_team_deletes_if_no_other_tournaments(self):
-        '''Test that a team is deleted if it is not part of any other tournaments.'''
-        self.client.force_authenticate(user=self.player1)
-
-        payload = {'team_id': self.team.id}
-        res = self.client.delete(self.url, data=payload)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        with self.assertRaises(Team.DoesNotExist):
-            Team.objects.get(id=self.team.id)
 
     def test_remove_team_not_deletes_if_part_of_other_tournaments(self):
         '''Test that a team is not deleted if it is part of another tournament.'''

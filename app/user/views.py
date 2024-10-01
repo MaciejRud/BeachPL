@@ -48,6 +48,8 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         '''Retrieve and return the authenticated user.'''
+        if not self.request.user.is_authenticated:
+            logger.warning("Unauthorized access attempt.")
         return self.request.user
 
 

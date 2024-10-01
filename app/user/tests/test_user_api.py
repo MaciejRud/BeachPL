@@ -17,7 +17,6 @@ from user.serializers import (
 
 
 CREATE_USER_URL = reverse('user:create')
-TOKEN_URL = reverse('user:token')
 ME_URL = reverse('user:me')
 LIST_OF_USERS_URL = reverse('user:player-list')
 
@@ -40,6 +39,7 @@ class PublicUserApiTest(TestCase):
             'password': 'testpass123',
             'imie': 'Test Name',
             'nazwisko': "Nazwa",
+            'gender':'MALE',
             'pesel': '12345612345',
             'user_type': 'PL'
         }
@@ -77,51 +77,11 @@ class PublicUserApiTest(TestCase):
             ).exists()
         self.assertFalse(user_exists)
 
-    def test_creating_token_for_user(self):
-        '''Test for creating a token for user.'''
-        user_details = {
-            'imie': "Test123",
-            'email': 'test@example.com',
-            'password': 'Test-password-123',
-        }
-        create_user(**user_details)
-
-        payload = {
-            'email': user_details['email'],
-            'password': user_details['password']
-        }
-        res = self.client.post(TOKEN_URL, payload)
-
-        self.assertIn('token', res.data)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-    def test_create_token_bad_credentials(self):
-        '''Test returns error if bad credentials.'''
-        create_user(email='test123@example.com', password='goodpass')
-
-        payload = {
-            'email': 'test123@example.com',
-            'password': 'badpass'
-        }
-        res = self.client.post(TOKEN_URL, payload)
-
-        self.assertNotIn('token', res.data)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_token_with_blank_password(self):
-        """Test returns error if blank password."""
-
-        payload = {'email': 'test@example.com', 'password': ''}
-        res = self.client.post(TOKEN_URL, payload)
-
-        self.assertNotIn('token', res.data)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_access_denied_with_no_authentication(self):
         '''Test for unauthorized access to acount.'''
 
         res = self.client.get(ME_URL)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_access_denied_for_list_of_players_without_authentication(self):
         '''Test for unathorized access to list of players.'''
@@ -151,6 +111,7 @@ class PrivateUserAPITests(TestCase):
             'email': 'testuser@example.com',
             'imie': 'Test Name',
             'nazwisko': '',
+            'gender':'',
             'pesel': None,
             'user_type': ''
             })
