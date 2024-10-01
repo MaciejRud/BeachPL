@@ -6,24 +6,7 @@ window.addEventListener('DOMContentLoaded', event => {
     const loginError = document.getElementById('login-error');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('value');
 
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        // Użytkownik jest zalogowany, pokaż przycisk "Wyloguj"
-        loginToggle.innerHTML = `
-                <span class="d-flex align-items-center">
-                    <i class="bi-box-arrow-right me-2"></i>
-                    <span class="small">Wyloguj</span>
-                </span>`;
-        loginToggle.classList.remove('btn-primary');
-        loginToggle.classList.add('btn-danger');
 
-        // Obsługa wylogowania
-        loginToggle.addEventListener('click', function() {
-            // Usuń token i odśwież stronę
-            localStorage.removeItem('authToken');
-            location.reload();
-        });
-    }
 
     // Activate Bootstrap scrollspy on the main nav element
     const mainNav = document.body.querySelector('#mainNav');
@@ -33,6 +16,7 @@ window.addEventListener('DOMContentLoaded', event => {
             offset: 74,
         });
     };
+
 
     // Collapse responsive navbar when toggler is visible
     const navbarToggler = document.body.querySelector('.navbar-toggler');
@@ -47,61 +31,61 @@ window.addEventListener('DOMContentLoaded', event => {
         });
     });
 
-    // Przełączanie widoczności formularza logowania
-    loginToggle.addEventListener('click', function() {
-        loginFormWrapper.classList.toggle('d-none');
-    });
+    console.log(isLoggedIn)
 
-    // Obsługa logowania
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(loginForm);
-        const data = {
-            email: formData.get('email'),
-            password: formData.get('password')
-        };
+    if (isLoggedIn === 'true') {
+        // loginToggle.textContent = 'Wyloguj';
 
-        fetch(loginUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error('Nieprawidłowe dane logowania');
-            }
-        })
-        .then(data => {
-            // Zapisz token w localStorage
-            localStorage.setItem('authToken', data.token);
-
-            // Ukryj formularz logowania
-            loginFormWrapper.classList.add('d-none');
-
-            // Zmień przycisk "Zaloguj" na "Wyloguj"
-            loginToggle.innerHTML = `
-                <span class="d-flex align-items-center">
-                    <i class="bi-box-arrow-right me-2"></i>
-                    <span class="small">Wyloguj</span>
-                </span>`;
-            loginToggle.classList.remove('btn-primary');
-            loginToggle.classList.add('btn-danger');
-
-            // Obsługa wylogowania
-            loginToggle.addEventListener('click', function() {
-                // Usuń token i odśwież stronę
-                localStorage.removeItem('authToken');
-                location.reload();
+        // Obsługa wylogowania
+        loginToggle.addEventListener('click', function() {
+            fetch(logoutUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); // Odśwież stronę po wylogowaniu
+                }
             });
-        })
-        .catch(error => {
-            loginError.textContent = error.message;
-            loginError.classList.remove('d-none');
         });
-    });
+    } else {
+        // loginToggle.textContent = 'Zaloguj';
+
+        // Przełączanie widoczności formularza logowania
+        loginToggle.addEventListener('click', function() {
+            loginFormWrapper.classList.toggle('d-none');
+        });
+
+        // Obsługa logowania
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(loginForm);
+            const data = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            fetch(loginUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Nieprawidłowe dane logowania');
+                }
+            })
+            .catch(error => {
+                loginError.textContent = error.message;
+                loginError.classList.remove('d-none');
+            });
+        });
+    }
 });

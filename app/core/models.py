@@ -109,7 +109,7 @@ class Team(models.Model):
             # Zakładamy, że zawodnicy mają atrybuty imie i nazwisko
             player1 = player_list[0]
             player2 = player_list[1]
-            return f"Team: {player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
+            return f"{player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
         return "Team with insufficient players"
 
 

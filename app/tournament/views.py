@@ -6,7 +6,6 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny,
@@ -28,7 +27,6 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.TournamentDetailSerializer
     queryset = Tournament.objects.all()
-    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -41,15 +39,22 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
         # Jeśli użytkownik jest graczem, widzi turnieje, w których bierze udział jego drużyna
         elif user.user_type == 'PL':
-            return self.queryset.filter(teams__players=user).distinct()
-
-        # Inni użytkownicy (np. sędziowie, wolontariusze) mogą mieć dodatkowe prawa w przyszłości
+            # Sprawdź, czy akcja to 'create_team'
+            if self.action == 'create_team':
+                # Zwróć wszystkie turnieje
+                return self.queryset.all()
+            else:
+                # Zwróć tylko turnieje, w których bierze udział jego drużyna
+                return self.queryset.filter(teams__players=user).distinct()
+            # Inni użytkownicy (np. sędziowie, wolontariusze) mogą mieć dodatkowe prawa w przyszłości
         return Tournament.objects.none()
 
     def get_serializer_class(self):
         '''Serializer for list of tournaments.'''
         if self.action == 'list':
             self.serializer_class = serializers.TournamentSerializer
+        elif self.action == 'create_team':
+            return serializers.TeamCreationSerializer
         return self.serializer_class
 
     def perform_create(self, serializer):
@@ -98,6 +103,10 @@ class TournamentViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             player_ids = serializer.validated_data['players']
 
+            # Sprawdź, czy zalogowany użytkownik jest jednym z graczy
+            if request.user.id not in player_ids:
+                return Response({"detail": "You must be part of the team."}, status=status.HTTP_400_BAD_REQUEST)
+
             if User.objects.filter(id__in=player_ids, user_type='PL').count() != 2:
                 return Response({"detail": "All players must be players."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -107,36 +116,50 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
             tournament.teams.add(team)
 
-            return Response({"detail": "Team created successfully."}, status=status.HTTP_201_CREATED)
+            team_serializer = serializers.TeamSerializer(team)
+
+            return Response({
+                "detail": "Team created successfully.",
+                'team':team_serializer.data,
+                },
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['delete'],  url_path='remove_team')
+    @action(detail=True, methods=['delete'], url_path='remove_team')
     def remove_team(self, request, pk=None):
-        '''Remove the team from tournament if the user is part of the team.'''
+        '''Remove the team from the tournament if the user is an organizer or part of the team.'''
         serializer = serializers.RemoveTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         tournament = self.get_object()
-        team_id = request.data.get('team_id')
+        team_id = serializer.validated_data.get('team_id')
         user = request.user
 
         if not team_id:
             return Response({"detail": "Team ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            team = Team.objects.get(id=team_id)
+            team = tournament.teams.get(id=team_id)
         except Team.DoesNotExist:
-            return Response({"detail": "Team not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Team not found in this tournament."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not team.players.filter(id=user.id).exists():
-            raise PermissionDenied("You are not a member of this team and cannot remove it.")
+        # Sprawdź, czy użytkownik jest organizatorem
+        if user.user_type == 'OR':
+            # Użytkownik jest organizatorem, może usunąć każdą drużynę
+            tournament.teams.remove(team)
 
-        tournament.teams.remove(team)
+        # Sprawdź, czy użytkownik jest graczem
+        elif user.user_type == 'PL':
+            # Sprawdź, czy użytkownik jest członkiem drużyny
+            if not team.players.filter(id=user.id).exists():
+                raise PermissionDenied("You are not a member of this team and cannot remove it.")
 
-        if team.tournaments.count() == 0:
-            team.delete()
+            tournament.teams.remove(team)
+        else:
+            return Response({"detail": "You do not have permission to remove this team."}, status=status.HTTP_403_FORBIDDEN)
 
-        return Response({"detail": "Team removed successfully."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Team removed successfully from the tournament."}, status=status.HTTP_200_OK)
 
 
 class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -157,3 +180,16 @@ class TournamentListView(TemplateView):
 
 class DetailedTournamentView(TemplateView):
     template_name = 'tournament/tournament_details.html'
+
+
+class CreateTournamentTemplate(TemplateView):
+    template_name = 'tournament/create-tournament.html'
+
+class CreateAndAddTeamTemplate(TemplateView):
+    template_name = 'tournament/add-team.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tournament_id = self.kwargs['id']  # Pobierz ID z URL
+        context['tournament'] = Tournament.objects.get(id=tournament_id)  # Pobierz obiekt turnieju
+        return context

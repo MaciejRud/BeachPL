@@ -12,7 +12,7 @@ from core import models
 
 class UserAdmin(BaseUserAdmin):
     '''Define the admin page for users.'''
-    list_display = ('id', 'imie', 'email', 'is_staff',)
+    list_display = ('id', 'imie', 'email', 'is_staff', 'user_type',)
     ordering = ['id']
 
     def get_fieldsets(self, request, obj=None):

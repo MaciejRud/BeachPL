@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dodaj nowy turniej{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+    <h1 class="mb-4">Dodaj nowy turniej</h1>
+
+    <!-- Formularz dodawania nowego turnieju -->
+    <form id="tournament-create-form" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="name" class="form-label">Nazwa turnieju</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+            <div class="invalid-feedback">
+                Proszę podać nazwę turnieju.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="tour_type" class="form-label">Typ turnieju</label>
+            <select class="form-select" id="tour_type" name="tour_type" required>
+                <option value="">Wybierz typ turnieju</option>
+                <!-- Opcje powinny pochodzić z backendu, zdefiniuj dostępne typy turnieju -->
+                <option value="SR">Seniorski</option>
+                <option value="JR">Juniorski</option>
+                <option value="MA">Master</option>
+            </select>
+            <div class="invalid-feedback">
+                Proszę wybrać typ turnieju.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="city" class="form-label">Miasto</label>
+            <input type="text" class="form-control" id="city" name="city" required>
+            <div class="invalid-feedback">
+                Proszę podać miasto.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="money_prize" class="form-label">Nagroda pieniężna</label>
+            <input type="number" class="form-control" id="money_prize" name="money_prize">
+            <div class="invalid-feedback">
+                Proszę podać nagrodę pieniężną.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="sex" class="form-label">Płeć</label>
+            <select class="form-select" id="sex" name="sex" required>
+                <option value="">Wybierz płeć</option>
+                <option value="MALE">Męski</option>
+                <option value="FEMALE">Żeński</option>
+            </select>
+            <div class="invalid-feedback">
+                Proszę wybrać płeć.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="ranking_type" class="form-label">Typ rankingu</label>
+            <select class="form-select" id="ranking_type" name="ranking_type" required>
+                <option value="">Wybierz typ rankingu</option>
+                <option value="NoneRank">Bezrankingowy</option>
+                <option value="OneStar">1 gwiazdka</option>
+                <option value="TwoStars">2 gwiazdki</option>
+                <option value="ThreeStars">3 gwiazdki</option>
+            </select>
+            <div class="invalid-feedback">
+                Proszę wybrać typ rankingu.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="date_of_beginning" class="form-label">Data rozpoczęcia</label>
+            <input type="date" class="form-control" id="date_of_beginning" name="date_of_beginning" required>
+            <div class="invalid-feedback">
+                Proszę podać datę rozpoczęcia.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="date_of_finishing" class="form-label">Data zakończenia</label>
+            <input type="date" class="form-control" id="date_of_finishing" name="date_of_finishing">
+            <div class="invalid-feedback">
+                Proszę podać datę zakończenia.
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Zapisz turniej</button>
+    </form>
+</main>
+
+<script>
+    // Walidacja formularza
+    (function() {
+        'use strict'
+        const form = document.querySelector('#tournament-create-form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+
+        // Dodawanie CSRF tokena do żądań
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('value');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Zatrzymanie standardowego działania formularza
+
+            // Wysłanie formularza za pomocą API
+            fetch('{% url "tournament:tournament-list" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({
+                    name: document.getElementById('name').value,
+                    tour_type: document.getElementById('tour_type').value,
+                    city: document.getElementById('city').value,
+                    money_prize: document.getElementById('money_prize').value,
+                    sex: document.getElementById('sex').value,
+                    ranking_type: document.getElementById('ranking_type').value,
+                    date_of_beginning: document.getElementById('date_of_beginning').value,
+                    date_of_finishing: document.getElementById('date_of_finishing').value,
+                }),
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    // Przekierowanie do widoku turnieju po sukcesie
+                    window.location.href = `{% url 'public-tournament-detail' 0 %}`.replace('0', data.id);
+                } else {
+                    console.error('Błąd przy tworzeniu turnieju:', data);
+                }
+            })
+            .catch(error => console.error('Błąd sieci:', error));
+        });
+    })();
+</script>
+{% endblock %}

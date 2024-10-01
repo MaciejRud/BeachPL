@@ -42,26 +42,31 @@ class UserListSerializer(serializers.ModelSerializer):
         fields = ['id', 'imie', 'nazwisko', 'user_type']
 
 
-class AuthTokenSerializer(serializers.Serializer):
-    '''Serializer for the user auth token.'''
-    email = serializers.EmailField()
-    password = serializers.CharField(
-        style={'input_type': 'password'},
-        trim_whitespace=False,
-    )
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
 
-    def validate(self, data):
-        '''Validate and authenticate the user.'''
-        email = data.get('email')
-        password = data.get('password')
-        user = authenticate(
-            username=email,
-            password=password,
-        )
 
-        if user is None:
-            msg = _('Unable to authenticate with provided credentials.')
-            raise serializers.ValidationError(msg, code='authentication')
+# class AuthTokenSerializer(serializers.Serializer):
+#     '''Serializer for the user auth token.'''
+#     email = serializers.EmailField()
+#     password = serializers.CharField(
+#         style={'input_type': 'password'},
+#         trim_whitespace=False,
+#     )
 
-        data['user'] = user
-        return data
+#     def validate(self, data):
+#         '''Validate and authenticate the user.'''
+#         email = data.get('email')
+#         password = data.get('password')
+#         user = authenticate(
+#             username=email,
+#             password=password,
+#         )
+
+#         if user is None:
+#             msg = _('Unable to authenticate with provided credentials.')
+#             raise serializers.ValidationError(msg, code='authentication')
+
+#         data['user'] = user
+#         return data

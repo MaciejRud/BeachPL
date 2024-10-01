@@ -24,12 +24,9 @@
     <!-- Players List Placeholder -->
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Lista Zawodników</h5>
-            <ul class="list-group">
-                <li class="list-group-item">Zawodnik 1</li>
-                <li class="list-group-item">Zawodnik 2</li>
-                <li class="list-group-item">Zawodnik 3</li>
-                <!-- Przykładowi zawodnicy, do edycji później -->
+            <h5 class="card-title">Lista Drużyn</h5>
+            <ul class="list-group" id="teams-list">
+                <!-- Lista drużyn wypełniona dynamicznie przez JavaScript -->
             </ul>
         </div>
     </div>
@@ -45,8 +42,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log(window.location.pathname.split('/'))
-        const tournamentId = window.location.pathname.split('/')[window.location.pathname.split('/').length - 2];
+        const tournamentId = window.location.pathname.split('/').slice(-2, -1)[0];
+        const userType = '{{ request.user.user_type }}';  // Dodaj zmienną z typem użytkownika
+        const userId = '{{ request.user.id }}';  // Dodaj zmienną z ID użytkownika
+
         fetch(`/api/public-tournaments/${tournamentId}/`)
             .then(response => {
                 if (!response.ok) {
@@ -56,13 +55,95 @@
             })
             .then(data => {
                 document.getElementById('tournament-name').textContent = data.name;
-                document.getElementById('tournament-type').textContent = data.type_display
+                document.getElementById('tournament-type').textContent = data.type_display;
                 document.getElementById('tournament-city').textContent = data.city;
                 document.getElementById('tournament-city').href = `https://www.google.com/maps/search/?api=1&query=${data.city}`;
-                document.getElementById('tournament-prize').textContent = data.money_prize + " zł"
-                document.getElementById('tournament-sex').textContent = data.sex_display
+                document.getElementById('tournament-prize').textContent = data.money_prize + " zł";
+                document.getElementById('tournament-sex').textContent = data.sex_display;
                 document.getElementById('start-date').textContent = new Date(data.date_of_beginning).toLocaleDateString();
                 document.getElementById('end-date').textContent = new Date(data.date_of_finishing).toLocaleDateString();
+
+                // Wypełnij listę drużyn
+                const teamsList = document.getElementById('teams-list');
+                teamsList.innerHTML = ''; // Wyczyść listę przed dodaniem nowych elementów
+                if (data.teams && data.teams.length > 0) { // Sprawdź, czy data.teams istnieje
+                    data.teams.forEach(team => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        li.textContent = team.string;
+                        console.log(team.id)
+                        console.log(team.players)
+                        console.log(userId)
+                        console.log(team.players.includes(userId))
+                        console.log(typeof userId); // Sprawdza typ userId
+                        console.log(typeof team.players[0]);
+
+                        // Sprawdź, czy użytkownik jest organizatorem
+                        if (userType === 'OR') {
+                            console.log('Organizer')
+                            const removeButton = document.createElement('button');
+                            removeButton.textContent = 'Usuń drużynę';
+                            removeButton.className = 'btn btn-danger btn-sm ms-2';
+                            removeButton.onclick = function() {
+                                fetch(`/api/tournament/${tournamentId}/remove_team/`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}'  // Dodaj token CSRF
+                                    },
+                                    body: JSON.stringify({ team_id: team.id })
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Nie udało się usunąć drużyny');
+                                    }
+                                    // Usuń element z listy
+                                    li.remove();
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                    alert('Wystąpił błąd podczas usuwania drużyny');
+                                });
+                            };
+                            li.appendChild(removeButton);  // Dodaj przycisk do listy
+                        } else if (userType === 'PL' && team.players.includes(Number(userId))) {
+                            console.log('działamy')
+                            // Sprawdź, czy zawodnik jest w drużynie
+                            const removeButton = document.createElement('button');
+                            removeButton.textContent = 'Usuń drużynę';
+                            removeButton.className = 'btn btn-danger btn-sm ms-auto';
+                            removeButton.onclick = function() {
+                                fetch(`/api/tournament/${tournamentId}/remove_team/`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}'  // Dodaj token CSRF
+                                    },
+                                    body: JSON.stringify({ team_id: team.id })
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Nie udało się usunąć drużyny');
+                                    }
+                                    // Usuń element z listy
+                                    li.remove();
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                    alert('Wystąpił błąd podczas usuwania drużyny');
+                                });
+                            };
+                            li.appendChild(removeButton);  // Dodaj przycisk do listy
+                        }
+
+                        teamsList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = 'Brak zapisanych drużyn';
+                    teamsList.appendChild(li);
+                }
             })
             .catch(error => {
                 document.getElementById('react-root').innerHTML = '<p>Turniej nie został znaleziony</p>';

@@ -7,9 +7,14 @@ from rest_framework import serializers
 from core.models import Tournament, Team
 
 class TeamSerializer(serializers.ModelSerializer):
+    string = serializers.SerializerMethodField()
+
     class Meta:
         model = Team
-        fields = ['id', 'players']
+        fields = ['id', 'players', 'string']
+
+    def get_string(self, obj):
+        return str(obj)
 
 class TournamentSerializer(serializers.ModelSerializer):
     '''Serializer for Tournaments.'''
@@ -44,11 +49,6 @@ class TournamentDetailSerializer(TournamentSerializer):
         fields = TournamentSerializer.Meta.fields
 
 
-class TeamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Team
-        fields = ['id', 'players', 'tournament']
-
 class TeamCreationSerializer(serializers.Serializer):
     players = serializers.ListField(
         child=serializers.IntegerField(),
@@ -57,4 +57,4 @@ class TeamCreationSerializer(serializers.Serializer):
     )
 
 class RemoveTeamSerializer(serializers.Serializer):
-    team_id = serializers.IntegerField()
+    team_id = serializers.IntegerField(required=True, help_text="ID of the team to be removed from the tournament.")

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<<div class="container mt-4">
+    <h1>{{ tournament.name }}</h1>
+    <p class="small">{{ tournament.sex_display }}</p>
+    <p>{{ tournament.date_of_beginning|date:"d.m.Y" }}</p>
+
+    <h2>Dodaj zawodnika do swojej drużyny</h2>
+
+    <!-- Wyszukiwarka zawodnika -->
+    <input type="text" id="search-player" class="form-control mb-3" placeholder="Wyszukaj zawodnika" style="width: 100%; max-width: 400px;">
+
+    <select id="player-select" class="form-select mb-3" size="7" style="width: 100%; max-width: 400px;">
+        <!-- Wypełnij ten select danymi z endpointu 'players/' -->
+    </select>
+
+    <button id="add-team-btn" class="btn btn-primary mt-3">Dodaj zawodnika</button>
+</div>
+
+<script>
+    // Załaduj zawodników
+    fetch("{% url 'user:player-list' %}")
+        .then(response => {
+            console.log('Otrzymana odpowiedź:', response);
+            return response.json();
+        })
+        .then(data => {
+            const playerSelect = document.getElementById('player-select');
+            data.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;  // Użyj id zawodnika
+                option.textContent = player.imie+" "+player.nazwisko;  // Zmień na odpowiednie pole
+                playerSelect.appendChild(option);
+            });
+        });
+
+    document.getElementById('add-team-btn').onclick = function() {
+        const selectedPlayers = Array.from(document.getElementById('player-select').selectedOptions).map(option => option.value);
+        const tournamentId = {{ tournament.id }}; // ID turnieju
+        const loggedInPlayerId = {{ request.user.id }};
+        console.log(tournamentId)
+
+        selectedPlayers.push(loggedInPlayerId);
+
+        fetch(`/api/tournament/${tournamentId}/create_team/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ players: selectedPlayers }),
+            credentials: 'include',
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Drużyna została dodana!');
+                // Ewentualnie możesz przekierować lub odświeżyć stronę
+            } else {
+                alert('Wystąpił błąd przy dodawaniu drużyny.');
+            }
+        })
+        .catch(error => console.error('Błąd:', error));
+    };
+</script>
+{% endblock %}

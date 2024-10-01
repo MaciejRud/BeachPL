@@ -1,0 +1,14 @@
+.btn-small {
+    padding: 5px 10px; /* Mniejsze paddingi */
+    font-size: 0.8rem; /* Mniejsza czcionka */
+    background-color: #6c757d; /* Szary kolor tła */
+    color: white; /* Biały kolor tekstu */
+}
+
+.btn-small:hover {
+    background-color: #5a6268; /* Ciemniejszy szary przy najechaniu */
+}
+
+.btn-add-tournament {
+    margin-bottom: 1rem; /* Odstęp od listy turniejów */
+}

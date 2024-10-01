@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'localflavor',
     'core',
     'rest_framework',
-    'rest_framework.authtoken',
     'drf_spectacular',
     'user',
     'tournament'
@@ -71,6 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'context_processors.user_type_processor',
             ],
         },
     },
@@ -148,4 +148,12 @@ AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS' : 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

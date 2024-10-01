@@ -16,32 +16,45 @@
 <!-- Tworzenie listy za pomocą API -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        fetch('{% url 'tournament:public-tournament-list' %}')
-            .then(response => response.json())
-            .then(data => {
-                const tournamentList = document.getElementById('tournament-list');
-                if (data.length === 0) {
-                    tournamentList.innerHTML = '<p>Brak dostępnych turniejów.</p>';
-                } else {
-                    data.forEach(tournament => {
-                        const item = document.createElement('a');
-                        item.href = `{% url 'public-tournament-detail' 0 %}`.replace('0', tournament.id);
-                        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
-                        item.innerHTML = `
-                            <div class="ms-2 me-auto">
-                                <div class="fw-bold">${tournament.name}</div>
-                                ${tournament.sex_display}
-                            </div>
-                            <span class="badge bg-primary rounded-pill">${new Date(tournament.date_of_beginning).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                        `;
-                        tournamentList.appendChild(item);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Błąd przy pobieraniu danych:', error);
-                document.getElementById('tournament-list').innerHTML = '<p>Wystąpił błąd podczas ładowania turniejów.</p>';
-            });
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('value');
+    const isAuthenticated = {{ user.is_authenticated|yesno:'true,false' }};
+    const userType = "{{ user.user_type }}";  // Pobranie typu użytkownika z kontekstu szablonu
+
+    fetch('{% url 'tournament:public-tournament-list' %}')
+        .then(response => response.json())
+        .then(data => {
+            const tournamentList = document.getElementById('tournament-list');
+            if (data.length === 0) {
+                tournamentList.innerHTML = '<p>Brak dostępnych turniejów.</p>';
+            } else {
+                data.forEach(tournament => {
+                    const item = document.createElement('a');
+                    item.href = `{% url 'public-tournament-detail' 0 %}`.replace('0', tournament.id);
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
+                    let joinButton = '';
+                    {% if user.is_authenticated and user.user_type == 'PL' %}
+                        const addTeamUrl = `{% url 'add-team' 0 %}`.replace('0', tournament.id);
+                        joinButton = `<a href="${addTeamUrl}" class="btn btn-success btn-sm me-3">Dołącz</a>`;
+                    {% endif %}
+                    item.innerHTML = `
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">${tournament.name}</div>
+                        ${tournament.sex_display}
+                    </div>
+                    <div class="d-flex align-items-center">
+                        ${joinButton}
+                        <span class="badge bg-primary rounded-pill">${new Date(tournament.date_of_beginning).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                `;
+
+                    tournamentList.appendChild(item);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Błąd przy pobieraniu danych:', error);
+            tournamentList.innerHTML = '<p>Wystąpił błąd podczas ładowania turniejów.</p>';
+        });
     });
 </script>
 {% endblock %}

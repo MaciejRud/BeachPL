@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Strefa Zawodnika{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+    <h1 class="mb-4">{{ user.imie }} {{ user.nazwisko }}</h1>
+
+    <!-- Lista turniejów, w których bierzesz udział -->
+    <h2 class="mb-4">Twoje turnieje</h2>
+    <div id="tournament-list" class="list-group">
+        <!-- Turnieje będą ładowane tutaj przez JavaScript -->
+    </div>
+</main>
+
+<!-- Tworzenie listy za pomocą API -->
+<script>
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('value');
+    document.addEventListener('DOMContentLoaded', function() {
+        if ({{ user.is_authenticated|yesno:'true,false' }}) {
+            fetch('{% url 'tournament:tournament-list' %}', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                credentials: 'include',
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Sieciowy błąd: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tournamentList = document.getElementById('tournament-list');
+                if (data.length === 0) {
+                    tournamentList.innerHTML = '<p>Brak dostępnych turniejów.</p>';
+                } else {
+                    data.forEach(tournament => {
+                        const item = document.createElement('a');
+                        item.href = `{% url 'public-tournament-detail' 0 %}`.replace('0', tournament.id);
+                        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
+                        item.innerHTML = `
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">${tournament.name}</div>
+                                ${tournament.sex_display}
+                            </div>
+                            <span class="badge bg-primary rounded-pill">${new Date(tournament.date_of_beginning).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        `;
+                        tournamentList.appendChild(item);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Błąd przy pobieraniu danych:', error);
+                document.getElementById('tournament-list').innerHTML = '<p>Wystąpił błąd podczas ładowania turniejów.</p>';
+            });
+        } else {
+            console.error('Użytkownik nie jest zalogowany.');
+        }
+    });
+</script>
+{% endblock %}
