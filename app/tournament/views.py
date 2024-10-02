@@ -15,6 +15,7 @@ from core.models import (
     Tournament,
     User,
     Team,
+    PlayerTournamentResult,
 )
 
 from tournament import serializers
@@ -160,6 +161,55 @@ class TournamentViewSet(viewsets.ModelViewSet):
             return Response({"detail": "You do not have permission to remove this team."}, status=status.HTTP_403_FORBIDDEN)
 
         return Response({"detail": "Team removed successfully from the tournament."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='award-points')
+    def award_points(self, request, pk=None):
+        '''Award points to teams based on their positions in the tournament.'''
+
+
+        # Sprawdzenie, czy użytkownik jest organizatorem
+        if request.user.user_type != 'OR':
+            return Response({"detail": "You do not have permission to award points."}, status=status.HTTP_403_FORBIDDEN)
+
+        tournament = self.get_object()
+        # Oczekiwany format danych wejściowych
+        serializer = serializers.AwardPointsSerializer(data=request.data)
+        if serializer.is_valid():
+            # Przetwarzanie danych
+            team_results = serializer.validated_data['team_results']
+
+            for result in team_results:
+                team_id = result['team_id']
+                position = result['position']
+                # Logika przyznawania punktów
+                team = Team.objects.get(id=team_id)
+
+                # Przykładowa logika przyznawania punktów
+                points_awarded = self.calculate_points(position)  # Zdefiniuj tę metodę według swojego systemu punktowego
+                for i in team.players.all():
+                    PlayerTournamentResult.objects.create(
+                        player=i,
+                        team=team,
+                        tournament=tournament,
+                        points_awarded=points_awarded,
+                        position=position,
+                        tournament_date=tournament.date_of_finishing,
+                    )
+
+            return Response({"detail": "Points awarded successfully."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def calculate_points(self, position):
+        '''Define your point system based on position.'''
+        # Przykładowa logika punktowa
+        if position == 1:
+            return 10  # Punkty za pierwsze miejsce
+        elif position == 2:
+            return 6   # Punkty za drugie miejsce
+        elif position == 3:
+            return 3   # Punkty za trzecie miejsce
+        return 0  # Brak punktów za inne miejsca
 
 
 class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):

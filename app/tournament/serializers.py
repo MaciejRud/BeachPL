@@ -4,7 +4,11 @@ Serializers for tournament APIs.
 
 from rest_framework import serializers
 
-from core.models import Tournament, Team
+from core.models import (
+    Tournament,
+    Team,
+    PlayerTournamentResult,
+)
 
 class TeamSerializer(serializers.ModelSerializer):
     string = serializers.SerializerMethodField()
@@ -58,3 +62,19 @@ class TeamCreationSerializer(serializers.Serializer):
 
 class RemoveTeamSerializer(serializers.Serializer):
     team_id = serializers.IntegerField(required=True, help_text="ID of the team to be removed from the tournament.")
+
+
+class TeamPositionSerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()
+    position = serializers.IntegerField()
+
+
+class AwardPointsSerializer(serializers.Serializer):
+    '''Serializer for awarding points to teams.'''
+    team_results = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.IntegerField(required=True),
+            required=True
+        ),
+        required=True
+    )

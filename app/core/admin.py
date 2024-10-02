@@ -2,10 +2,8 @@
 Admin site customization.
 '''
 
-from typing import Any
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from rest_framework.request import HttpRequest
 
 from core import models
 
@@ -19,7 +17,7 @@ class UserAdmin(BaseUserAdmin):
         '''Customize fieldsets dynamically based on user_type.'''
         # Sprawdzamy, czy edytujemy istniejącego użytkownika (obj != None)
         if not obj:
-            # Jeśli nie ma obiektu, tzn. że dodajemy nowego użytkownika, więc użyj add_fieldsets
+            # Użyj add_fieldsets jeśli nie ma użytkownika.
             return self.add_fieldsets
         # Dla edycji użytkownika (obj != None) używamy fieldsets
         fieldsets = [
@@ -39,7 +37,7 @@ class UserAdmin(BaseUserAdmin):
                 'Additional informations',
                 {
                     'fields': ['user_type', 'data_urodzenia',
-                            'pesel', 'last_login',]
+                               'pesel', 'last_login',]
                 }
             ),
         ]
@@ -79,6 +77,7 @@ class UserAdmin(BaseUserAdmin):
     ]
 
     list_filter = ['user_type', 'is_staff', 'is_superuser', 'is_active']
+
 
 class TournamentAdmin(admin.ModelAdmin):
     '''Define the admin page for tournaments.'''

@@ -7,7 +7,11 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Tournament, Team
+from core.models import (
+    Tournament,
+    Team,
+    PlayerTournamentResult,
+)
 
 from tournament.serializers import TournamentDetailSerializer
 
@@ -359,3 +363,43 @@ class RemoveTeamFromTournamentTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(self.team, other_tournament.teams.all())  # Drużyna pozostaje w innym turnieju
 
+class TournamentPointsTests(TestCase):
+    def setUp(self):
+        # Tworzenie użytkownika organizatora, turnieju i drużyn
+        self.client = APIClient()
+        self.organizer = create_user(email='organizer@example.com', password='password', user_type='OR')
+        self.tournament = create_tournament(name='Test Tournament', user=self.organizer)
+        self.player1 = create_user(email="player1@example.com", password='123TestPass', user_type="PL")
+        self.player2 = create_user(email="player2@example.com", password='123TestPass', user_type="PL")
+        self.team = Team.objects.create()
+        self.team.players.set([self.player1, self.player2])
+        self.tournament.teams.add(self.team)
+        self.url = reverse('tournament:tournament-award-points', kwargs={'pk': self.tournament.id})
+
+    def test_award_points_success(self):
+        self.client.force_authenticate(self.organizer)
+
+        payload = {
+            "team_results": [
+                {"team_id": self.team.id, "position": 1}
+            ]
+        }
+
+        res = self.client.post(self.url, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(PlayerTournamentResult.objects.count(), 2)
+        player1_result = PlayerTournamentResult.objects.filter(player=self.player1).first()
+        self.assertEqual(player1_result.points_awarded, 10)
+
+    def test_award_points_permission_denied(self):
+        '''Test for awarding points denied if the player wants to do it.'''
+        self.client.force_authenticate(self.player1)
+
+        payload = {
+            "team_results": [
+                {"team_id": self.team.id, "position": 1}
+            ]
+        }
+
+        res = self.client.post(self.url, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
