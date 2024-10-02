@@ -180,3 +180,11 @@ class PlayerTournamentResult(models.Model):
     position = models.PositiveIntegerField()  # Miejsce w turnieju
     tournament_date = models.DateField()  # Data zakończenia turnieju
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Ranking(models.Model):
+    date = models.DateField()  # Data generacji rankingu
+    gender = models.CharField(max_length=6, choices=User.Gender.choices)  # Płeć
+    rankings = models.JSONField()  # Słownik przechowujący ranking (np. {1: {'user_id': user_id, 'points': points}, ...})
+
+

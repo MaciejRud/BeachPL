@@ -37,7 +37,7 @@ class PlayerListView(generics.ListAPIView):
         current_user = self.request.user
 
         # Return players excluding the current user
-        return User.objects.filter(user_type='PL').exclude(id=current_user.id)
+        return User.objects.filter(user_type='PL', gender=current_user.gender).exclude(id=current_user.id)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):

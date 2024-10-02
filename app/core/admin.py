@@ -10,7 +10,7 @@ from core import models
 
 class UserAdmin(BaseUserAdmin):
     '''Define the admin page for users.'''
-    list_display = ('id', 'imie', 'email', 'is_staff', 'user_type',)
+    list_display = ('id', 'imie', 'email', 'is_staff', 'user_type', 'gender', 'data_urodzenia')
     ordering = ['id']
 
     def get_fieldsets(self, request, obj=None):
@@ -47,7 +47,7 @@ class UserAdmin(BaseUserAdmin):
                 (
                     'Additional information',
                     {
-                        'fields': ['data_urodzenia', 'points']
+                        'fields': ['data_urodzenia', 'points', 'gender',]
                     },
                 )
             )

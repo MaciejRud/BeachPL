@@ -39,7 +39,6 @@
         const selectedPlayers = Array.from(document.getElementById('player-select').selectedOptions).map(option => option.value);
         const tournamentId = {{ tournament.id }}; // ID turnieju
         const loggedInPlayerId = {{ request.user.id }};
-        console.log(tournamentId)
 
         selectedPlayers.push(loggedInPlayerId);
 

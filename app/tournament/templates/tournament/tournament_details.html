@@ -71,16 +71,9 @@
                         const li = document.createElement('li');
                         li.className = 'list-group-item d-flex justify-content-between align-items-center';
                         li.textContent = team.string;
-                        console.log(team.id)
-                        console.log(team.players)
-                        console.log(userId)
-                        console.log(team.players.includes(userId))
-                        console.log(typeof userId); // Sprawdza typ userId
-                        console.log(typeof team.players[0]);
 
                         // Sprawdź, czy użytkownik jest organizatorem
                         if (userType === 'OR') {
-                            console.log('Organizer')
                             const removeButton = document.createElement('button');
                             removeButton.textContent = 'Usuń drużynę';
                             removeButton.className = 'btn btn-danger btn-sm ms-2';

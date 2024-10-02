@@ -249,11 +249,14 @@ class TournamentTeamTestCase(TestCase):
     '''Tests for managing teams in tournament.'''
     def setUp(self):
         self.client = APIClient()
-        self.organizer = create_user(email='organizer@example.com', password='TestPass123', user_type='OR')
-        self.player1 = create_user(email='player1@example.com', password='TestPass123', user_type='PL')
-        self.player2 = create_user(email='player2@example.com', password='TestPass123', user_type='PL')
+        self.organizer = create_user(email='organizer@example.com', password='TestPass123',
+                                     user_type='OR',)
+        self.player1 = create_user(email='player1@example.com', password='TestPass123',
+                                   user_type='PL', gender='MALE',)
+        self.player2 = create_user(email='player2@example.com', password='TestPass123',
+                                   user_type='PL', gender='MALE',)
         self.client.force_authenticate(self.organizer)
-        self.tournament = create_tournament(user=self.organizer)
+        self.tournament = create_tournament(user=self.organizer, sex="MALE")
         self.url = detail_url(self.tournament.id)
 
     def test_create_team(self):

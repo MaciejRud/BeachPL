@@ -98,6 +98,7 @@ class PrivateUserAPITests(TestCase):
             imie='Test Name',
             email='testuser@example.com',
             password='TestPass',
+            gender='MALE'
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -111,7 +112,7 @@ class PrivateUserAPITests(TestCase):
             'email': 'testuser@example.com',
             'imie': 'Test Name',
             'nazwisko': '',
-            'gender':'',
+            'gender':'MALE',
             'pesel': None,
             'user_type': ''
             })
@@ -172,6 +173,52 @@ class PrivateUserAPITests(TestCase):
         serializer = UserListSerializer(list_of_tournaments, many=True)
         self.assertEqual(res.data, serializer.data)
 
+    def test_retrieving_list_of_players_only_same_gender(self):
+        '''Test for retrieving list of players only same gender.'''
+
+        create_user(
+            imie='Hubert',
+            nazwisko = 'Testowy1',
+            email='testuser1@example.com',
+            password='TestPass',
+            user_type = 'PL',
+            gender = 'MALE',
+        )
+
+        create_user(
+            imie='Andrzej',
+            nazwisko = 'Testowy2',
+            email='testuser2@example.com',
+            password='TestPass',
+            user_type = 'PL',
+            gender = 'MALE',
+        )
+
+        create_user(
+            imie='Wojtek',
+            nazwisko = 'Testowy3',
+            email='testuser3@example.com',
+            password='TestPass',
+            user_type = 'PL',
+            gender = 'MALE',
+        )
+
+        create_user(
+            imie='Alina',
+            nazwisko = 'Testowa4',
+            email='testuser4@example.com',
+            password='TestPass',
+            user_type = 'PL',
+            gender = 'FEMALE',
+        )
+
+        res = self.client.get(LIST_OF_USERS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        list_of_users = User.objects.filter(user_type='PL', gender="MALE").order_by('nazwisko')
+        serializer = UserListSerializer(list_of_users, many=True)
+        self.assertEqual(res.data, serializer.data)
+
     def test_retrieving_list_of_players(self):
         '''Test for retrieving list of only players.'''
 
@@ -181,6 +228,7 @@ class PrivateUserAPITests(TestCase):
             email='testuser1@example.com',
             password='TestPass',
             user_type = 'PL',
+            gender="MALE",
         )
 
         create_user(
@@ -189,6 +237,7 @@ class PrivateUserAPITests(TestCase):
             email='testuser2@example.com',
             password='TestPass',
             user_type = 'PL',
+            gender="MALE"
         )
 
         user_organizer = create_user(

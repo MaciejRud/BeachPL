@@ -31,7 +31,6 @@ window.addEventListener('DOMContentLoaded', event => {
         });
     });
 
-    console.log(isLoggedIn)
 
     if (isLoggedIn === 'true') {
         // loginToggle.textContent = 'Wyloguj';

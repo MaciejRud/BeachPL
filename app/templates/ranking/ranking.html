@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Ranking Zawodników</h1>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#maleRankings">Męski</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#femaleRankings">Żeński</a>
+        </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div id="maleRankings" class="tab-pane fade show active">
+            <h3 class="mt-3">Ranking Męski</h3>
+            <table class="table table-striped" id="male-ranking-table">
+                <thead>
+                    <tr>
+                        <th>Miejsce</th>
+                        <th>Imię i Nazwisko</th>
+                        <th>Punkty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Wiersze będą dodane dynamicznie przez JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="femaleRankings" class="tab-pane fade">
+            <h3 class="mt-3">Ranking Żeński</h3>
+            <table class="table table-striped" id="female-ranking-table">
+                <thead>
+                    <tr>
+                        <th>Miejsce</th>
+                        <th>Imię i Nazwisko</th>
+                        <th>Punkty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Wiersze będą dodane dynamicznie przez JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Funkcja do fetchowania rankingów z gender jako payload
+        function fetchRankings(gender) {
+            const baseUrl = window.location.origin; // Pobierz bazowy URL
+            const url = `${baseUrl}/api/ranking/last-ranking/`; // Skonstruuj pełny URL
+            const finalUrl = new URL(url);
+            finalUrl.searchParams.append('gender', gender);
+
+            fetch(finalUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Pobieranie danych z pola rankings, które jest w formacie JSON
+                    const rankings = Object.entries(data.rankings).map(([position, playerData]) => ({
+                        user_id: playerData.user_id,
+                        points: playerData.points
+                    }));
+                    // Wyświetlanie danych w tabeli
+                    populateTable(`${gender.toLowerCase()}-ranking-table`, rankings);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        // Funkcja do populacji tabeli rankingami
+        function populateTable(tableId, rankings) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            tableBody.innerHTML = '';  // Czyści aktualne wiersze
+
+            rankings.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.user_id}</td>  <!-- Wyświetlanie user_id -->
+                    <td>${player.points}</td>   <!-- Wyświetlanie punktów -->
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Wywołaj funkcję na załadowanie strony
+        fetchRankings('MALE');   // Pobieranie rankingu dla mężczyzn
+        fetchRankings('FEMALE'); // Pobieranie rankingu dla kobiet
+    });
+</script>
+
+{% endblock %}

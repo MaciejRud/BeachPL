@@ -108,8 +108,15 @@ class TournamentViewSet(viewsets.ModelViewSet):
             if request.user.id not in player_ids:
                 return Response({"detail": "You must be part of the team."}, status=status.HTTP_400_BAD_REQUEST)
 
-            if User.objects.filter(id__in=player_ids, user_type='PL').count() != 2:
+            players = User.objects.filter(id__in=player_ids, user_type='PL')
+
+            # Sprawdź, czy jest dokładnie dwóch graczy i czy są 'players'
+            if players.count() != 2:
                 return Response({"detail": "All players must be players."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Sprawdź, czy płeć obu graczy zgadza się z płcią turnieju
+            if players.filter(gender=tournament.sex).count() != 2:
+                return Response({"detail": "Both players must have the same gender as required by the tournament."}, status=status.HTTP_400_BAD_REQUEST)
 
             team = Team.objects.create()
             team.players.set(player_ids)

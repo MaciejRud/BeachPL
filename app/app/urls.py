@@ -38,8 +38,10 @@ urlpatterns = [
     ),
     path('api/user/', include('user.urls')),
     path('api/', include('tournament.urls')),
+    path('api/', include('ranking.urls')),
     path('tournaments/', include('tournament.html_urls')),
-    path('user/', include('user.urls_html'))
+    path('user/', include('user.urls_html')),
+    path('ranking/', include('ranking.urls_html')),
 ]
 
 if settings.DEBUG:
