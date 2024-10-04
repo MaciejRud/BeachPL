@@ -211,11 +211,11 @@ class TournamentViewSet(viewsets.ModelViewSet):
         '''Define your point system based on position.'''
         # Przykładowa logika punktowa
         if position == 1:
-            return 10  # Punkty za pierwsze miejsce
+            return 100  # Punkty za pierwsze miejsce
         elif position == 2:
-            return 6   # Punkty za drugie miejsce
+            return 60   # Punkty za drugie miejsce
         elif position == 3:
-            return 3   # Punkty za trzecie miejsce
+            return 30   # Punkty za trzecie miejsce
         return 0  # Brak punktów za inne miejsca
 
 

@@ -67,12 +67,10 @@
                     return response.json();
                 })
                 .then(data => {
-                    // Pobieranie danych z pola rankings, które jest w formacie JSON
                     const rankings = Object.entries(data.rankings).map(([position, playerData]) => ({
-                        user_id: playerData.user_id,
+                        full_name: playerData.full_name,  // Zamiast user_id, pobieramy pełne imię i nazwisko
                         points: playerData.points
                     }));
-                    // Wyświetlanie danych w tabeli
                     populateTable(`${gender.toLowerCase()}-ranking-table`, rankings);
                 })
                 .catch(error => {
@@ -89,7 +87,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td>${player.user_id}</td>  <!-- Wyświetlanie user_id -->
+                    <td>${player.full_name}</td>  <!-- Wyświetlanie pełnego imienia i nazwiska -->
                     <td>${player.points}</td>   <!-- Wyświetlanie punktów -->
                 `;
                 tableBody.appendChild(row);

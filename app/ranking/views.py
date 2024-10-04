@@ -3,9 +3,9 @@ Views for ranking API.
 '''
 
 from rest_framework.decorators import action
-from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils import timezone
 from datetime import timedelta
 from core.models import (
@@ -19,11 +19,14 @@ from django.views.generic import TemplateView
 
 
 class RankingViewSet(viewsets.ModelViewSet):
+    '''View for manage ranking APIs.'''
+
     queryset = Ranking.objects.all()
     serializer_class = RankingSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Pobieranie wszystkich rankingów
+        '''Retrieve all historical rankings.'''
         queryset = Ranking.objects.all()
 
         # Filtrowanie po dacie, jeśli podano
@@ -65,7 +68,10 @@ class RankingViewSet(viewsets.ModelViewSet):
 
         # Tworzenie ostatecznego słownika rankingowego
         final_male_rankings = {
-            position + 1: {'user_id': player_id, 'points': points}
+            position + 1: {
+                'full_name': f"{User.objects.get(id=player_id).imie} {User.objects.get(id=player_id).nazwisko}",
+                'points': points
+            }
             for position, (player_id, points) in enumerate(sorted_male_rankings)
         }
 
@@ -99,19 +105,19 @@ class RankingViewSet(viewsets.ModelViewSet):
         Ranking.objects.update_or_create(
             date=current_date,
             gender="MALE",
-            rankings=final_male_rankings
+            defaults={'rankings':final_male_rankings},
         )
 
         Ranking.objects.update_or_create(
             date=current_date,
             gender="FEMALE",
-            rankings=final_female_rankings
+            defaults={'rankings':final_female_rankings},
         )
 
 
         return Response(status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], url_path='last-ranking', name='last-ranking')
+    @action(detail=False, methods=['get'], url_path='last-ranking', permission_classes=[AllowAny])
     def get_last_ranking(self, request):
         gender = request.query_params.get('gender')
 

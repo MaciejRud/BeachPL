@@ -392,7 +392,7 @@ class TournamentPointsTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(PlayerTournamentResult.objects.count(), 2)
         player1_result = PlayerTournamentResult.objects.filter(player=self.player1).first()
-        self.assertEqual(player1_result.points_awarded, 10)
+        self.assertEqual(player1_result.points_awarded, 100)
 
     def test_award_points_permission_denied(self):
         '''Test for awarding points denied if the player wants to do it.'''

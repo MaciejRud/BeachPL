@@ -112,8 +112,9 @@ class Team(models.Model):
             raise ValidationError("A team must have exactly 2 players.")
 
     def __str__(self):
-        # Pobieramy listę zawodników przypisanych do drużyny
-        player_list = self.players.all()
+
+        # Pobieramy listę zawodników przypisanych do drużyny, posortowaną po ID
+        player_list = self.players.all().order_by('id')
         # Sprawdzamy, czy drużyna ma dokładnie dwóch zawodników
         if player_list.count() == 2:
             # Zakładamy, że zawodnicy mają atrybuty imie i nazwisko

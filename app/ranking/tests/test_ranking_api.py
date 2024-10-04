@@ -3,66 +3,150 @@ Tests for Ranking API.
 """
 
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from django.urls import resolve
+
+
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient
+
 from core.models import (
     User,
     Ranking,
     PlayerTournamentResult,
+    Team,
+    Tournament,
 )
 
-class RankingViewSetTests(APITestCase):
+def create_user(**params):
+    '''Create and return new user.'''
+    return get_user_model().objects.create_user(**params)
+
+
+class RankingAPITestCase(TestCase):
+
     def setUp(self):
-        # Tworzenie użytkowników testowych
-        self.male_user1 = User.objects.create_user(username='male_user1', password='password123', gender=User.Gender.MALE)
-        self.male_user2 = User.objects.create_user(username='male_user2', password='password123', gender=User.Gender.MALE)
-        self.female_user1 = User.objects.create_user(username='female_user1', password='password123', gender=User.Gender.FEMALE)
+        # Tworzenie przykładowych drużyn
+        self.client = APIClient()
+        self.maleuser1 = create_user(
+            email='player1@example.com',
+            password='testpassword',
+            imie='Jan',
+            nazwisko='Kowalski',
+            gender='MALE',
+            user_type='PL',
+        )
+        self.maleuser2 = create_user(
+            email='player2@example.com',
+            password='testpassword',
+            imie='Marcin',
+            nazwisko='Kowalski',
+            gender='MALE',
+            user_type='PL',
+        )
+        self.maleuser3 = create_user(
+            email='player3@example.com',
+            password='testpassword',
+            imie='Aleksander',
+            nazwisko='Kowalski',
+            gender='MALE',
+            user_type='PL',
+        )
+        self.maleuser4 = create_user(
+            email='player4@example.com',
+            password='testpassword',
+            imie='Kamil',
+            nazwisko='Kowalski',
+            gender='MALE',
+            user_type='PL',
+        )
 
-        # Dodanie wyników turniejów dla mężczyzn
-        for i in range(3):
-            PlayerTournamentResult.objects.create(user=self.male_user1, tournament_id=i, points_awarded=100-i)
+        self.team1 = Team.objects.create()
+        self.team1.players.add(self.maleuser1)
+        self.team1.players.add(self.maleuser2)
+        self.team2 = Team.objects.create()
+        self.team2.players.add(self.maleuser3)
+        self.team2.players.add(self.maleuser4)
 
-        for i in range(2):
-            PlayerTournamentResult.objects.create(user=self.male_user2, tournament_id=i, points_awarded=50-i)
+        self.organizator = create_user(
+            email='organizator@example.com',
+            password='testpassword',
+            imie='Wojtek',
+            nazwisko='Kowalski',
+            gender='MALE',
+            user_type='OR',
+            )
 
-        # Dodanie wyników turniejów dla kobiet
-        for i in range(3):
-            PlayerTournamentResult.objects.create(user=self.female_user1, tournament_id=i, points_awarded=80-i)
+        # Tworzenie przykładowych turniejów
+        self.tournament = Tournament.objects.create(
+            user=self.organizator,  # Organizator
+            name='Tournament A',
+            tour_type='SR',
+            city='Warsaw',
+            money_prize=1000,
+            sex='MALE',
+            ranking_type='NoneRank',
+            date_of_beginning='2024-01-01',
+            date_of_finishing='2024-01-02',
+        )
 
-    def test_generate_ranking(self):
-        url = reverse('ranking-list')  # Upewnij się, że to jest poprawny URL dla Twojego RankingViewSet
+        # Tworzenie przykładowych wyników turniejów
+        PlayerTournamentResult.objects.create(
+            player=self.team1.players.first(),
+            tournament=self.tournament,
+            team=self.team1,
+            points_awarded=100,
+            position=2,
+            tournament_date='2024-01-02'
+        )
+        PlayerTournamentResult.objects.create(
+            player=self.team2.players.first(),
+            tournament=self.tournament,
+            team=self.team2,
+            points_awarded=150,
+            position=1,
+            tournament_date='2024-01-02'
+        )
 
-        response = self.client.post(url)
+    def test_create_ranking(self):
+        self.client.force_authenticate(self.organizator)
+        url = reverse('ranking:ranking-list')  # Upewnij się, że ta nazwa jest poprawna
+        res = self.client.post(url)
 
-        # Sprawdzenie odpowiedzi
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Ranking.objects.count(), 2)  # Sprawdzamy, czy utworzono 2 rankingi (mężczyźni, kobiety)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Ranking.objects.first().rankings['1']['full_name'], f'{self.maleuser3.imie} {self.maleuser3.nazwisko}')
+        self.assertEqual(Ranking.objects.count(), 2)  # Oczekujemy 2 rankingi (MALE i FEMALE)
 
-        # Sprawdzanie, czy rankingi mają odpowiednie dane
-        male_ranking = Ranking.objects.filter(gender=User.Gender.MALE).first()
-        female_ranking = Ranking.objects.filter(gender=User.Gender.FEMALE).first()
+    def test_get_last_ranking(self):
+        self.client.force_authenticate(self.organizator)
+        url = reverse('ranking:ranking-get-last-ranking') + '?gender=MALE'
 
-        self.assertIsNotNone(male_ranking)
-        self.assertIsNotNone(female_ranking)
+        # Tworzenie rankingu przed testem
+        Ranking.objects.create(
+            date='2024-01-01',
+            gender='MALE',
+            rankings={1: {'user_id': self.team1.players.first().id, 'points': 100}}
+        )
 
-        self.assertGreater(male_ranking.rankings[0][1], male_ranking.rankings[1][1])  # Sprawdzamy, czy pierwszy gracz ma więcej punktów niż drugi
-        self.assertGreater(female_ranking.rankings[0][1], female_ranking.rankings[1][1])  # To samo dla kobiet
+        res = self.client.get(url)
 
-    def test_generate_ranking_no_results(self):
-        # Usuwamy wyniki turniejów, aby przetestować scenariusz bez wyników
-        PlayerTournamentResult.objects.all().delete()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('rankings', res.data)  # Oczekujemy, że dane rankingu będą w odpowiedzi
 
-        url = reverse('ranking-list')
-        response = self.client.post(url)
+    def test_get_last_ranking_invalid_gender(self):
+        url = '/api/ranking/last-ranking/' + '?gender=INVALID'
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Ranking.objects.count(), 2)  # Nadal powinno być 2 rankingi, ale bez danych
+        res = self.client.get(url)
 
-        male_ranking = Ranking.objects.filter(gender=User.Gender.MALE).first()
-        female_ranking = Ranking.objects.filter(gender=User.Gender.FEMALE).first()
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data, {"error": "Invalid gender parameter"})
 
-        self.assertIsNotNone(male_ranking)
-        self.assertIsNotNone(female_ranking)
+    def test_get_last_ranking_no_rankings(self):
+        url = '/api/ranking/last-ranking/' + '?gender=MALE'
 
-        self.assertEqual(male_ranking.rankings, [])  # Sprawdzamy, czy ranking mężczyzn jest pusty
-        self.assertEqual(female_ranking.rankings, [])  # Sprawdzamy, czy ranking kobiet jest pusty
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(res.data, {"error": "No rankings found"})
