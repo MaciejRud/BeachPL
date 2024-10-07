@@ -101,7 +101,7 @@ Ranking Page: Shows the current rankings of players.
 Tournament Details: Detailed view of each tournament, including teams and rankings.
 
 
-## API Endpoints
+## API Endpoints details
 
 ### Tournaments
 
