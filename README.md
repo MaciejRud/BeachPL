@@ -2,16 +2,7 @@
 
 This project provides an API for managing Beach Volleyball tournaments of Polish Federation of Volleyball, player rankings, and user authentication. The API allows organizers to create, update, and delete tournaments, manage player teams, and assign rankings based on tournament results.
 
-## Table of Contents
-
-- [API Endpoints](#api-endpoints)
-- [Authentication](#authentication)
-- [Tournaments](#tournaments)
-- [Rankings](#rankings)
-- [Users](#users)
-- [Installation](#installation)
-- [Usage](#usage)
-- [License](#license)
+Additionally, the project includes visual representations of API interactions using Django Templates, allowing users to interact with the system through a user-friendly web interface.
 
 ## API Endpoints
 
@@ -94,3 +85,17 @@ The user management system allows for registration, listing, and updating users.
   "pesel": null
 }
 ```
+
+## Visual Representation with Django Templates
+The project also includes pages built using Django Templates to visually represent the interaction with the API. This feature allows users to:
+
+View lists of tournaments and rankings directly in the browser.
+Register for tournaments.
+View personal rankings and tournament history.
+Use forms to create and edit tournaments (for organizers).
+These templates provide an intuitive user interface on top of the API, giving users an easy way to interact with the system without manually sending API requests.
+
+Example Pages:
+Tournament List: Displays all available tournaments.
+Ranking Page: Shows the current rankings of players.
+Tournament Details: Detailed view of each tournament, including teams and rankings.
