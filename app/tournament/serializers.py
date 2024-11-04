@@ -9,18 +9,21 @@ from core.models import (
     Team,
 )
 
+
 class TeamSerializer(serializers.ModelSerializer):
     string = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ['id', 'players', 'string']
+        fields = ["id", "players", "string"]
 
     def get_string(self, obj):
         return str(obj)
 
+
 class TournamentSerializer(serializers.ModelSerializer):
-    '''Serializer for Tournaments.'''
+    """Serializer for Tournaments."""
+
     sex_display = serializers.SerializerMethodField()
     type_display = serializers.SerializerMethodField()
     ranking_display = serializers.SerializerMethodField()
@@ -28,12 +31,22 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tournament
-        fields = ['id', 'name', 'tour_type', 'type_display', 'city',
-                  'money_prize', 'sex', 'sex_display',
-                  'ranking_type', 'ranking_display',
-                  'date_of_beginning', 'date_of_finishing',
-                  'teams',]
-        read_only_fields = ['id']
+        fields = [
+            "id",
+            "name",
+            "tour_type",
+            "type_display",
+            "city",
+            "money_prize",
+            "sex",
+            "sex_display",
+            "ranking_type",
+            "ranking_display",
+            "date_of_beginning",
+            "date_of_finishing",
+            "teams",
+        ]
+        read_only_fields = ["id"]
 
     def get_sex_display(self, obj):
         return obj.get_sex_display()
@@ -46,7 +59,7 @@ class TournamentSerializer(serializers.ModelSerializer):
 
 
 class TournamentDetailSerializer(TournamentSerializer):
-    '''Serializer of manager of Tournament API.'''
+    """Serializer of manager of Tournament API."""
 
     class Meta(TournamentSerializer.Meta):
         fields = TournamentSerializer.Meta.fields
@@ -54,13 +67,15 @@ class TournamentDetailSerializer(TournamentSerializer):
 
 class TeamCreationSerializer(serializers.Serializer):
     players = serializers.ListField(
-        child=serializers.IntegerField(),
-        min_length=2,
-        max_length=2
+        child=serializers.IntegerField(), min_length=2, max_length=2
     )
 
+
 class RemoveTeamSerializer(serializers.Serializer):
-    team_id = serializers.IntegerField(required=True, help_text="ID of the team to be removed from the tournament.")
+    team_id = serializers.IntegerField(
+        required=True,
+        help_text="ID of the team to be removed from the tournament.",
+    )
 
 
 class TeamPositionSerializer(serializers.Serializer):
@@ -69,11 +84,11 @@ class TeamPositionSerializer(serializers.Serializer):
 
 
 class AwardPointsSerializer(serializers.Serializer):
-    '''Serializer for awarding points to teams.'''
+    """Serializer for awarding points to teams."""
+
     team_results = serializers.ListField(
         child=serializers.DictField(
-            child=serializers.IntegerField(required=True),
-            required=True
+            child=serializers.IntegerField(required=True), required=True
         ),
-        required=True
+        required=True,
     )

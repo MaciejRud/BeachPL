@@ -1,13 +1,13 @@
-'''
+"""
 Database models.
-'''
+"""
 
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager,
     AbstractBaseUser,
-    PermissionsMixin
+    PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
 
@@ -17,16 +17,17 @@ import re
 
 
 def validate_pesel(value):
-    '''Validates a PESEL number.'''
-    if value == " " or not re.match(r'^\d{11}$', value):
+    """Validates a PESEL number."""
+    if value == " " or not re.match(r"^\d{11}$", value):
         msg = _("Pesel must be an 11-digit number.")
         raise ValidationError(msg)
 
 
 class UserManager(BaseUserManager):
-    '''Manager for users.'''
+    """Manager for users."""
+
     def create_user(self, email, password=None, **extra_fields):
-        '''Create, save and return an user.'''
+        """Create, save and return an user."""
         if not email:
             raise ValueError("User must have an email adress.")
         user = self.model(email=self.normalize_email(email), **extra_fields)
@@ -35,7 +36,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        '''Create, save and return a superuser.'''
+        """Create, save and return a superuser."""
         user = self.create_user(email, password)
         user.is_staff = True
         user.is_superuser = True
@@ -44,7 +45,8 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    '''User in the system.'''
+    """User in the system."""
+
     email = models.EmailField(max_length=255, unique=True)
     imie = models.CharField(max_length=30)
     nazwisko = models.CharField(max_length=30)
@@ -68,16 +70,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=Gender.choices,
     )
 
-    pesel = models.CharField(max_length=11, null=True, blank=True,
-                             validators=[validate_pesel])
-    tournament_points = models.JSONField(default=dict, blank=True)  # Przechowuj punkty za turnieje
+    pesel = models.CharField(
+        max_length=11, null=True, blank=True, validators=[validate_pesel]
+    )
+    tournament_points = models.JSONField(
+        default=dict, blank=True
+    )  # Przechowuj punkty za turnieje
     total_points = models.IntegerField(default=0, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
 
     def is_organizer(self):
         return self.user_type == self.UserType.ORGANIZER
@@ -94,17 +99,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         if self.is_organizer():
-            return f'Organizer {self.imie} {self.nazwisko}'
+            return f"Organizer {self.imie} {self.nazwisko}"
         elif self.is_player():
             return f"Player {self.imie} {self.nazwisko}"
         return "Unknown User Type"
 
 
 class Team(models.Model):
-    players = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name='teams'
-    )
+    players = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="teams")
 
     def clean(self):
         super().clean()
@@ -112,20 +114,21 @@ class Team(models.Model):
             raise ValidationError("A team must have exactly 2 players.")
 
     def __str__(self):
-
         # Pobieramy listę zawodników przypisanych do drużyny, posortowaną po ID
-        player_list = self.players.all().order_by('id')
+        player_list = self.players.all().order_by("id")
         # Sprawdzamy, czy drużyna ma dokładnie dwóch zawodników
         if player_list.count() == 2:
             # Zakładamy, że zawodnicy mają atrybuty imie i nazwisko
             player1 = player_list[0]
             player2 = player_list[1]
-            return f"{player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
+            return (
+                f"{player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
+            )
         return "Team with insufficient players"
 
 
 class Tournament(models.Model):
-    '''Tournament object.'''
+    """Tournament object."""
 
     class TourType(models.TextChoices):
         SENIOR = "SR", ("Seniorski")
@@ -137,15 +140,15 @@ class Tournament(models.Model):
         FEMALE = "FEMALE", ("Żeński")
 
     class RankingType(models.TextChoices):
-        NONRANKING = "NoneRank", ('Bezrankingowy')
-        ONESTAR = "OneStar", ('1 gwiazdka')
-        TWOSTARS = "TwoStars", ('2 gwiazdki')
-        TRHEESTARS = "ThreeStars", ('3 gwiazdki')
+        NONRANKING = "NoneRank", ("Bezrankingowy")
+        ONESTAR = "OneStar", ("1 gwiazdka")
+        TWOSTARS = "TwoStars", ("2 gwiazdki")
+        TRHEESTARS = "ThreeStars", ("3 gwiazdki")
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='created_tournaments'
+        related_name="created_tournaments",
     )
     name = models.CharField(max_length=50)
     tour_type = models.CharField(
@@ -166,7 +169,7 @@ class Tournament(models.Model):
 
     teams = models.ManyToManyField(
         Team,
-        related_name='tournaments',
+        related_name="tournaments",
     )
 
     def __str__(self):
@@ -174,9 +177,15 @@ class Tournament(models.Model):
 
 
 class PlayerTournamentResult(models.Model):
-    player = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tournament_results")
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="player_results")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="player_results")
+    player = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="tournament_results"
+    )
+    tournament = models.ForeignKey(
+        Tournament, on_delete=models.CASCADE, related_name="player_results"
+    )
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="player_results"
+    )
     points_awarded = models.PositiveIntegerField()  # Punkty za dany turniej
     position = models.PositiveIntegerField()  # Miejsce w turnieju
     tournament_date = models.DateField()  # Data zakończenia turnieju
@@ -187,5 +196,3 @@ class Ranking(models.Model):
     date = models.DateField()  # Data generacji rankingu
     gender = models.CharField(max_length=6, choices=User.Gender.choices)  # Płeć
     rankings = models.JSONField()  # Słownik przechowujący ranking (np. {1: {'user_id': user_id, 'points': points}, ...})
-
-

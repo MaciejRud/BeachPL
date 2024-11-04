@@ -1,6 +1,7 @@
 """
 Views for the user API.
 """
+
 from rest_framework import generics, authentication, permissions
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -23,12 +24,15 @@ from user.serializers import (
 
 
 class CreateUserView(generics.CreateAPIView):
-    '''Create a new user in the system.'''
+    """Create a new user in the system."""
+
     serializer_class = UserSerializers
     permission_classes = [permissions.AllowAny]
 
+
 class PlayerListView(generics.ListAPIView):
-    '''View to list users being players.'''
+    """View to list users being players."""
+
     serializer_class = UserListSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -37,17 +41,20 @@ class PlayerListView(generics.ListAPIView):
         current_user = self.request.user
 
         # Return players excluding the current user
-        return User.objects.filter(user_type='PL', gender=current_user.gender).exclude(id=current_user.id)
+        return User.objects.filter(
+            user_type="PL", gender=current_user.gender
+        ).exclude(id=current_user.id)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
-    '''Manage the authenticated user.'''
+    """Manage the authenticated user."""
+
     serializer_class = UserSerializers
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        '''Retrieve and return the authenticated user.'''
+        """Retrieve and return the authenticated user."""
         if not self.request.user.is_authenticated:
             logger.warning("Unauthorized access attempt.")
         return self.request.user
@@ -56,25 +63,31 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 class CustomLoginView(APIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = LoginSerializer
+
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        logger.debug(f'Email: {email}, Password: {password}')
+        email = request.data.get("email")
+        password = request.data.get("password")
+        logger.debug(f"Email: {email}, Password: {password}")
         user = authenticate(request, email=email, password=password)
         if user is not None:
             login(request, user)
-            return Response({'message': 'Logged in successfully'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(
+                {"message": "Logged in successfully"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"error": "Invalid credentials"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class CreateUserTemplate(TemplateView):
-    template_name = 'user/register.html'
+    template_name = "user/register.html"
 
 
 class OrganizerZoneTemplate(TemplateView):
-    template_name = 'user/organizer-zone.html'
+    template_name = "user/organizer-zone.html"
 
 
 class PlayerZoneTemplate(TemplateView):
-    template_name = 'user/player-zone.html'
+    template_name = "user/player-zone.html"

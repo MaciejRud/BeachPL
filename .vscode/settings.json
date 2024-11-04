@@ -1,3 +1,11 @@
 {
-    "djangointellisense.debugMessages": false
+  "djangointellisense.debugMessages": false,
+  "editor.formatOnSave": true,
+  "eslint.lintTask.enable": true,
+  "python.defaultInterpreterPath": "./venv/Scripts/python",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "editor.formatOnPaste": true,
+  "black-formatter.args": ["--line-length", "79"]
 }
