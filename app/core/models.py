@@ -106,7 +106,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Team(models.Model):
-    players = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="teams")
+    players = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="teams"
+    )
 
     def clean(self):
         super().clean()
@@ -121,9 +123,7 @@ class Team(models.Model):
             # Zakładamy, że zawodnicy mają atrybuty imie i nazwisko
             player1 = player_list[0]
             player2 = player_list[1]
-            return (
-                f"{player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
-            )
+            return f"{player1.imie} {player1.nazwisko} & {player2.imie} {player2.nazwisko}"
         return "Team with insufficient players"
 
 
@@ -194,5 +194,9 @@ class PlayerTournamentResult(models.Model):
 
 class Ranking(models.Model):
     date = models.DateField()  # Data generacji rankingu
-    gender = models.CharField(max_length=6, choices=User.Gender.choices)  # Płeć
-    rankings = models.JSONField()  # Słownik przechowujący ranking (np. {1: {'user_id': user_id, 'points': points}, ...})
+    gender = models.CharField(
+        max_length=6, choices=User.Gender.choices
+    )  # Płeć
+    rankings = (
+        models.JSONField()
+    )  # Słownik przechowujący ranking (np. {1: {'user_id': user_id, 'points': points}, ...})

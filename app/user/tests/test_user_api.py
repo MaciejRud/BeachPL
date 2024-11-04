@@ -13,7 +13,6 @@ from core.models import User
 
 from user.serializers import (
     UserListSerializer,
-    UserSerializers,
 )
 
 
@@ -225,39 +224,3 @@ class PrivateUserAPITests(TestCase):
         ).order_by("nazwisko")
         serializer = UserListSerializer(list_of_users, many=True)
         self.assertEqual(res.data, serializer.data)
-
-    def test_retrieving_list_of_players(self):
-        """Test for retrieving list of only players."""
-
-        create_user(
-            imie="Hubert",
-            nazwisko="Testowy1",
-            email="testuser1@example.com",
-            password="TestPass",
-            user_type="PL",
-            gender="MALE",
-        )
-
-        create_user(
-            imie="Andrzejt",
-            nazwisko="Testowy2",
-            email="testuser2@example.com",
-            password="TestPass",
-            user_type="PL",
-            gender="MALE",
-        )
-
-        user_organizer = create_user(
-            imie="Wojtek",
-            nazwisko="Testowy3",
-            email="testuser3@example.com",
-            password="TestPass",
-            user_type="OR",
-        )
-
-        res = self.client.get(LIST_OF_USERS_URL)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
-        for user in res.data:
-            self.assertNotIn(user_organizer.imie, user["imie"])

@@ -3,7 +3,6 @@ Views for the user API.
 """
 
 from rest_framework import generics, authentication, permissions
-from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from django.views.generic import TemplateView
 from django.contrib.auth import authenticate, login
@@ -12,7 +11,6 @@ from rest_framework import status
 
 import logging
 
-logger = logging.getLogger(__name__)
 
 from core.models import User
 
@@ -21,6 +19,8 @@ from user.serializers import (
     UserListSerializer,
     LoginSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CreateUserView(generics.CreateAPIView):
