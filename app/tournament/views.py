@@ -34,20 +34,20 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Retrieve tournaments for authenticated users."""
         user = self.request.user
 
-        # Jeśli użytkownik jest organizatorem, widzi tylko swoje turnieje
+        # If the user is an organizer, they only see their own tournaments
         if user.user_type == "OR":
             return self.queryset.filter(user=user).order_by("-id")
 
-        # Jeśli użytkownik jest graczem, widzi turnieje, w których bierze udział jego drużyna
+        # If the user is a player, they see tournaments in which their team participates
         elif user.user_type == "PL":
-            # Sprawdź, czy akcja to 'create_team'
+            # Check if the action is 'create_team'
             if self.action == "create_team":
-                # Zwróć wszystkie turnieje
+                # Return all tournaments
                 return self.queryset.all()
             else:
-                # Zwróć tylko turnieje, w których bierze udział jego drużyna
+                # Return only tournaments in which their team participates
                 return self.queryset.filter(teams__players=user).distinct()
-            # Inni użytkownicy (np. sędziowie, wolontariusze) mogą mieć dodatkowe prawa w przyszłości
+            # Other users (e.g., referees, volunteers) may have additional rights in the future
         return Tournament.objects.none()
 
     def get_serializer_class(self):
@@ -69,7 +69,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Allow only the organizer to delete the tournament."""
         tournament = self.get_object()
 
-        # Sprawdzamy, czy użytkownik jest organizatorem i właścicielem tego turnieju
+        # Check if the user is an organizer and the owner of this tournament
         if request.user.user_type != "OR" or tournament.user != request.user:
             raise PermissionDenied(
                 "You do not have permission to delete this tournament."
@@ -81,7 +81,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Allow only the organizer to update the tournament."""
         tournament = self.get_object()
 
-        # Sprawdź, czy użytkownik jest organizatorem i właścicielem tego turnieju
+        # Check if the user is an organizer and the owner of this tournament
         if request.user.user_type != "OR" or tournament.user != request.user:
             raise PermissionDenied(
                 "You do not have permission to update this tournament."
@@ -93,7 +93,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Allow only the organizer to partially update the tournament."""
         tournament = self.get_object()
 
-        # Sprawdź, czy użytkownik jest organizatorem i właścicielem tego turnieju
+        # Check if the user is an organizer and the owner of this tournament
         if request.user.user_type != "OR" or tournament.user != request.user:
             raise PermissionDenied(
                 "You do not have permission to update this tournament."
@@ -110,7 +110,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             player_ids = serializer.validated_data["players"]
 
-            # Sprawdź, czy zalogowany użytkownik jest jednym z graczy
+            # Check if the logged-in user is one of the players
             if request.user.id not in player_ids:
                 return Response(
                     {"detail": "You must be part of the team."},
@@ -119,14 +119,14 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
             players = User.objects.filter(id__in=player_ids, user_type="PL")
 
-            # Sprawdź, czy jest dokładnie dwóch graczy i czy są 'players'
+            # Check if there are exactly two players and if they are 'players'
             if players.count() != 2:
                 return Response(
                     {"detail": "All players must be players."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Sprawdź, czy płeć obu graczy zgadza się z płcią turnieju
+            # Check if the gender of both players matches the gender of the tournament
             if players.filter(gender=tournament.sex).count() != 2:
                 return Response(
                     {
@@ -176,14 +176,14 @@ class TournamentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Sprawdź, czy użytkownik jest organizatorem
+        # Check if the user is an organizer
         if user.user_type == "OR":
-            # Użytkownik jest organizatorem, może usunąć każdą drużynę
+            # The user is an organizer, they can remove any team
             tournament.teams.remove(team)
 
-        # Sprawdź, czy użytkownik jest graczem
+        # Check if the user is a player
         elif user.user_type == "PL":
-            # Sprawdź, czy użytkownik jest członkiem drużyny
+            # Check if the user is a member of the team
             if not team.players.filter(id=user.id).exists():
                 raise PermissionDenied(
                     "You are not a member of this team and cannot remove it."
@@ -205,7 +205,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
     def award_points(self, request, pk=None):
         """Award points to teams based on their positions in the tournament."""
 
-        # Sprawdzenie, czy użytkownik jest organizatorem
+        # Check if the user is an organizer
         if request.user.user_type != "OR":
             return Response(
                 {"detail": "You do not have permission to award points."},
@@ -213,22 +213,22 @@ class TournamentViewSet(viewsets.ModelViewSet):
             )
 
         tournament = self.get_object()
-        # Oczekiwany format danych wejściowych
+        # Expected input data format
         serializer = serializers.AwardPointsSerializer(data=request.data)
         if serializer.is_valid():
-            # Przetwarzanie danych
+            # Process the data
             team_results = serializer.validated_data["team_results"]
 
             for result in team_results:
                 team_id = result["team_id"]
                 position = result["position"]
-                # Logika przyznawania punktów
+                # Logic for awarding points
                 team = Team.objects.get(id=team_id)
 
-                # Przykładowa logika przyznawania punktów
+                # Example logic for awarding points
                 points_awarded = self.calculate_points(
                     position
-                )  # Zdefiniuj tę metodę według swojego systemu punktowego
+                )  # Define this method according to your point system
                 for i in team.players.all():
                     PlayerTournamentResult.objects.create(
                         player=i,
@@ -248,14 +248,14 @@ class TournamentViewSet(viewsets.ModelViewSet):
 
     def calculate_points(self, position):
         """Define your point system based on position."""
-        # Przykładowa logika punktowa
+        # Example point logic
         if position == 1:
-            return 100  # Punkty za pierwsze miejsce
+            return 100  # Points for first place
         elif position == 2:
-            return 60  # Punkty za drugie miejsce
+            return 60  # Points for second place
         elif position == 3:
-            return 30  # Punkty za trzecie miejsce
-        return 0  # Brak punktów za inne miejsca
+            return 30  # Points for third place
+        return 0  # No points for other places
 
 
 class PublicViewOfTournamentsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -287,8 +287,8 @@ class CreateAndAddTeamTemplate(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        tournament_id = self.kwargs["id"]  # Pobierz ID z URL
+        tournament_id = self.kwargs["id"]  # Get ID from URL
         context["tournament"] = Tournament.objects.get(
             id=tournament_id
-        )  # Pobierz obiekt turnieju
+        )  # Get tournament object
         return context
