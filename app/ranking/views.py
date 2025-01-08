@@ -124,7 +124,6 @@ class RankingViewSet(viewsets.ModelViewSet):
             gender="FEMALE",
             defaults={"rankings": final_female_rankings},
         )
-
         return Response(status=status.HTTP_201_CREATED)
 
     @action(

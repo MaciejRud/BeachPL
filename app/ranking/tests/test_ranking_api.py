@@ -5,7 +5,9 @@ Tests for Ranking API.
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
+from datetime import timedelta
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -26,6 +28,8 @@ def create_user(**params):
 class RankingAPITestCase(TestCase):
     def setUp(self):
         # Tworzenie przykładowych drużyn
+        today = timezone.now().date()
+
         self.client = APIClient()
         self.maleuser1 = create_user(
             email="player1@example.com",
@@ -85,8 +89,8 @@ class RankingAPITestCase(TestCase):
             money_prize=1000,
             sex="MALE",
             ranking_type="NoneRank",
-            date_of_beginning="2024-01-01",
-            date_of_finishing="2024-01-02",
+            date_of_beginning=today - timedelta(days=31),
+            date_of_finishing=today - timedelta(days=30),
         )
 
         # Tworzenie przykładowych wyników turniejów
@@ -96,7 +100,7 @@ class RankingAPITestCase(TestCase):
             team=self.team1,
             points_awarded=100,
             position=2,
-            tournament_date="2024-01-02",
+            tournament_date=today - timedelta(days=30),
         )
         PlayerTournamentResult.objects.create(
             player=self.team2.players.first(),
@@ -104,7 +108,7 @@ class RankingAPITestCase(TestCase):
             team=self.team2,
             points_awarded=150,
             position=1,
-            tournament_date="2024-01-02",
+            tournament_date=today - timedelta(days=30),
         )
 
     def test_create_ranking(self):
@@ -115,6 +119,7 @@ class RankingAPITestCase(TestCase):
         res = self.client.post(url)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
         self.assertEqual(
             Ranking.objects.first().rankings["1"]["full_name"],
             f"{self.maleuser3.imie} {self.maleuser3.nazwisko}",
